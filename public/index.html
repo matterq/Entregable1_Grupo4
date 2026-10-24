@@ -1,0 +1,929 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios y Mascotas</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .contenedor {
+            max-width: 1050px;
+            margin: auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 15px;
+        }
+
+        h1 {
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .resumen {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .estadistica {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px #00000010;
+        }
+
+        .estadistica strong {
+            display: block;
+            font-size: 32px;
+            color: #2563eb;
+            margin-bottom: 8px;
+        }
+
+        .seccion {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px #00000012;
+        }
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+        }
+
+        button:hover {
+            filter: brightness(0.92);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .secundario {
+            background: #475569;
+        }
+
+        .eliminar {
+            background: #dc2626;
+        }
+
+        .cancelar {
+            background: #64748b;
+        }
+
+        .formulario {
+            display: none;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin: 12px 0 5px;
+        }
+
+        input, select {
+            display: block;
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+            background: white;
+        }
+
+        input[type="file"] {
+            padding: 8px;
+        }
+
+        .ayuda {
+            font-size: 13px;
+            color: #64748b;
+            margin: 8px 0;
+        }
+
+        .botones-formulario {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .mensaje {
+            margin: 12px 0;
+            font-weight: bold;
+            white-space: pre-wrap;
+        }
+
+        .mensaje.ok {
+            color: #15803d;
+        }
+
+        .mensaje.error {
+            color: #b91c1c;
+        }
+
+        .lista {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .tarjeta {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            background: #fff;
+            overflow-wrap: anywhere;
+        }
+
+        .tarjeta h3 {
+            margin: 10px 0;
+        }
+
+        .tarjeta p {
+            margin: 6px 0;
+        }
+
+        .foto {
+            width: 110px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .galeria {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .galeria .foto {
+            width: 85px;
+            height: 85px;
+        }
+
+        .botones-tarjeta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .vacio {
+            color: #64748b;
+            padding: 15px;
+        }
+
+        @media (max-width: 550px) {
+            .resumen {
+                grid-template-columns: 1fr;
+            }
+
+            .seccion {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="contenedor">
+
+    <header>
+        <h1>Bienvenido al sistema de gestión</h1>
+        <p>Administración de usuarios y mascotas</p>
+    </header>
+
+    <div class="resumen">
+        <div class="estadistica">
+            <strong id="totalUsuarios">0</strong>
+            Usuarios registrados
+        </div>
+
+        <div class="estadistica">
+            <strong id="totalMascotas">0</strong>
+            Mascotas registradas
+        </div>
+    </div>
+
+    <!-- GESTIÓN DE USUARIOS -->
+    <section class="seccion">
+
+        <h2>Gestión de Usuarios</h2>
+
+        <div class="acciones">
+            <button type="button" onclick="nuevoUsuario()">
+                Agregar Usuario
+            </button>
+
+            <button type="button" class="secundario"
+                    onclick="cargarUsuarios()">
+                Ver Usuarios
+            </button>
+        </div>
+
+        <form id="formUsuario" class="formulario">
+
+            <h3 id="tituloUsuario">Registrar usuario</h3>
+
+            <input type="hidden" id="idUsuario">
+
+            <label for="firstname">Nombre</label>
+            <input type="text" id="firstname"
+                   name="firstname" required>
+
+            <label for="lastname">Apellido</label>
+            <input type="text" id="lastname"
+                   name="lastname" required>
+
+            <label for="username">Nombre de usuario</label>
+            <input type="text" id="username"
+                   name="username" required>
+
+            <label for="password">Contraseña</label>
+            <input type="password" id="password"
+                   name="password">
+
+            <p id="ayudaPassword" class="ayuda">
+                La contraseña es obligatoria al crear un usuario.
+            </p>
+
+            <label for="avatar">Fotografía de usuario</label>
+            <input type="file" id="avatar"
+                   name="avatar"
+                   accept="image/jpeg,image/png,image/webp">
+
+            <p class="ayuda">
+                Formatos JPG, PNG o WEBP. Máximo 5 MB.
+            </p>
+
+            <div class="botones-formulario">
+                <button type="submit" id="guardarUsuario">
+                    Guardar Usuario
+                </button>
+
+                <button type="button" class="cancelar"
+                        onclick="cerrarUsuario()">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+
+        <div id="mensajeUsuario" class="mensaje"
+             role="status"></div>
+
+        <div id="listaUsuarios" class="lista"></div>
+    </section>
+
+    <!-- GESTIÓN DE MASCOTAS -->
+    <section class="seccion">
+
+        <h2>Gestión de Mascotas</h2>
+
+        <div class="acciones">
+            <button type="button" onclick="nuevaMascota()">
+                Agregar Mascota
+            </button>
+
+            <button type="button" class="secundario"
+                    onclick="cargarMascotas()">
+                Ver Mascotas
+            </button>
+        </div>
+
+        <form id="formMascota" class="formulario">
+
+            <h3 id="tituloMascota">Registrar mascota</h3>
+
+            <input type="hidden" id="idMascota">
+
+            <label for="especie">Especie</label>
+            <input type="text" id="especie"
+                   name="especie" required>
+
+            <label for="color">Color</label>
+            <input type="text" id="color"
+                   name="color" required>
+
+            <label for="edad">Edad</label>
+            <input type="number" id="edad"
+                   name="edad" min="0" step="1" required>
+
+            <label for="sexo">Sexo</label>
+            <select id="sexo" name="sexo" required>
+                <option value="">Seleccione</option>
+                <option value="macho">Macho</option>
+                <option value="hembra">Hembra</option>
+            </select>
+
+            <label for="img">Fotografías</label>
+            <input type="file" id="img"
+                   name="img"
+                   accept="image/jpeg,image/png,image/webp"
+                   multiple>
+
+            <p id="ayudaImagenes" class="ayuda">
+                Máximo 5 imágenes por mascota, 5 MB cada una.
+            </p>
+
+            <div class="botones-formulario">
+                <button type="submit" id="guardarMascota">
+                    Guardar Mascota
+                </button>
+
+                <button type="button" class="cancelar"
+                        onclick="cerrarMascota()">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+
+        <div id="mensajeMascota" class="mensaje"
+             role="status"></div>
+
+        <div id="listaMascotas" class="lista"></div>
+    </section>
+
+</div>
+
+<script>
+    const API_USERS = '/api/users';
+    const API_PETS = '/api/pets';
+
+    let usuariosActuales = [];
+    let mascotasActuales = [];
+
+    const obtener = id => document.getElementById(id);
+
+    function mensaje(id, texto, esError = false) {
+        const elemento = obtener(id);
+        elemento.textContent = texto;
+        elemento.className = esError
+            ? 'mensaje error'
+            : 'mensaje ok';
+    }
+
+    // Consultas y peticiones a Express
+    async function solicitar(url, opciones = {}) {
+        const respuesta = await fetch(url, opciones);
+        const datos = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(
+                datos.error || 'Error al realizar la operación'
+            );
+        }
+
+        return datos;
+    }
+
+    // Crear elementos de texto de forma segura
+    function textoElemento(etiqueta, contenido) {
+        const elemento = document.createElement(etiqueta);
+        elemento.textContent = contenido;
+        return elemento;
+    }
+
+    function crearBoton(etiqueta, clase, accion) {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.textContent = etiqueta;
+        boton.className = clase;
+        boton.addEventListener('click', accion);
+        return boton;
+    }
+
+    // Crear fotografías sin insertar HTML dinámico
+    function crearImagen(ruta, descripcion) {
+        const imagen = document.createElement('img');
+        imagen.className = 'foto';
+        imagen.alt = descripcion;
+        imagen.loading = 'lazy';
+
+        if (
+            typeof ruta === 'string' &&
+            ruta.startsWith('/img/') &&
+            !ruta.startsWith('//')
+        ) {
+            imagen.src = ruta;
+        }
+
+        return imagen;
+    }
+
+    // =============================
+    // USUARIOS
+    // =============================
+
+    function cerrarUsuario() {
+        obtener('formUsuario').style.display = 'none';
+        obtener('formUsuario').reset();
+        obtener('idUsuario').value = '';
+    }
+
+    function nuevoUsuario() {
+        const formulario = obtener('formUsuario');
+
+        formulario.reset();
+        obtener('idUsuario').value = '';
+        obtener('tituloUsuario').textContent =
+            'Registrar usuario';
+
+        obtener('password').required = true;
+        obtener('ayudaPassword').textContent =
+            'La contraseña es obligatoria al crear un usuario.';
+
+        obtener('guardarUsuario').textContent =
+            'Guardar Usuario';
+
+        mensaje('mensajeUsuario', '');
+        formulario.style.display = 'block';
+        formulario.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+
+    async function cargarUsuarios() {
+        const lista = obtener('listaUsuarios');
+        lista.replaceChildren();
+
+        try {
+            usuariosActuales = await solicitar(API_USERS);
+
+            obtener('totalUsuarios').textContent =
+                usuariosActuales.length;
+
+            if (usuariosActuales.length === 0) {
+                lista.appendChild(
+                    textoElemento('p', 'No hay usuarios registrados.')
+                );
+                return;
+            }
+
+            usuariosActuales.forEach(usuario => {
+                const tarjeta = document.createElement('article');
+                tarjeta.className = 'tarjeta';
+
+                if (usuario.avatar) {
+                    tarjeta.appendChild(
+                        crearImagen(
+                            usuario.avatar,
+                            'Avatar de ' + usuario.username
+                        )
+                    );
+                }
+
+                tarjeta.appendChild(
+                    textoElemento(
+                        'h3',
+                        `${usuario.firstname} ${usuario.lastname}`
+                    )
+                );
+
+                tarjeta.appendChild(
+                    textoElemento('p', 'ID: ' + usuario.id)
+                );
+
+                tarjeta.appendChild(
+                    textoElemento('p', 'Usuario: ' + usuario.username)
+                );
+
+                const acciones = document.createElement('div');
+                acciones.className = 'botones-tarjeta';
+
+                acciones.appendChild(
+                    crearBoton('Editar', 'secundario', () => {
+                        editarUsuario(usuario.id);
+                    })
+                );
+
+                acciones.appendChild(
+                    crearBoton('Eliminar', 'eliminar', () => {
+                        eliminarUsuario(usuario.id);
+                    })
+                );
+
+                tarjeta.appendChild(acciones);
+                lista.appendChild(tarjeta);
+            });
+
+        } catch (error) {
+            mensaje('mensajeUsuario', error.message, true);
+        }
+    }
+
+    function editarUsuario(id) {
+        const usuario = usuariosActuales.find(u => u.id === id);
+
+        if (!usuario) {
+            mensaje('mensajeUsuario', 'Usuario no encontrado', true);
+            return;
+        }
+
+        obtener('formUsuario').reset();
+
+        obtener('idUsuario').value = usuario.id;
+        obtener('firstname').value = usuario.firstname;
+        obtener('lastname').value = usuario.lastname;
+        obtener('username').value = usuario.username;
+
+        obtener('password').value = '';
+        obtener('password').required = false;
+
+        obtener('ayudaPassword').textContent =
+            'Deja la contraseña vacía para conservar la actual.';
+
+        obtener('tituloUsuario').textContent =
+            'Modificar usuario #' + usuario.id;
+
+        obtener('guardarUsuario').textContent =
+            'Actualizar Usuario';
+
+        mensaje('mensajeUsuario', '');
+        obtener('formUsuario').style.display = 'block';
+
+        obtener('formUsuario').scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+
+    obtener('formUsuario').addEventListener(
+        'submit',
+        async evento => {
+            evento.preventDefault();
+
+            const formulario = evento.currentTarget;
+            const id = obtener('idUsuario').value;
+            const editando = id !== '';
+
+            const datos = new FormData(formulario);
+
+            // Si se modifica y no hay nueva contraseña,
+            // se conserva la que ya está guardada
+            if (editando && !obtener('password').value) {
+                datos.delete('password');
+            }
+
+            const boton = obtener('guardarUsuario');
+            boton.disabled = true;
+
+            mensaje('mensajeUsuario', 'Guardando usuario...');
+
+            try {
+                const usuario = await solicitar(
+                    editando ? `${API_USERS}/${id}` : API_USERS,
+                    {
+                        method: editando ? 'PUT' : 'POST',
+                        body: datos
+                    }
+                );
+
+                cerrarUsuario();
+
+                mensaje(
+                    'mensajeUsuario',
+                    editando
+                        ? 'Usuario actualizado correctamente. ID: ' + usuario.id
+                        : 'Usuario registrado correctamente. ID: ' + usuario.id
+                );
+
+                await cargarUsuarios();
+
+            } catch (error) {
+                mensaje('mensajeUsuario', error.message, true);
+            } finally {
+                boton.disabled = false;
+            }
+        }
+    );
+
+    async function eliminarUsuario(id) {
+        const confirmado = confirm(
+            `¿Seguro que deseas eliminar al usuario #${id}?`
+        );
+
+        if (!confirmado) return;
+
+        try {
+            await solicitar(`${API_USERS}/${id}`, {
+                method: 'DELETE'
+            });
+
+            cerrarUsuario();
+
+            mensaje(
+                'mensajeUsuario',
+                'Usuario eliminado correctamente'
+            );
+
+            await cargarUsuarios();
+
+        } catch (error) {
+            mensaje('mensajeUsuario', error.message, true);
+        }
+    }
+
+    // =============================
+    // MASCOTAS
+    // =============================
+
+    function cerrarMascota() {
+        obtener('formMascota').style.display = 'none';
+        obtener('formMascota').reset();
+        obtener('idMascota').value = '';
+    }
+
+    function nuevaMascota() {
+        const formulario = obtener('formMascota');
+
+        formulario.reset();
+        obtener('idMascota').value = '';
+
+        obtener('tituloMascota').textContent =
+            'Registrar mascota';
+
+        obtener('guardarMascota').textContent =
+            'Guardar Mascota';
+
+        obtener('ayudaImagenes').textContent =
+            'Máximo 5 imágenes por mascota, 5 MB cada una.';
+
+        mensaje('mensajeMascota', '');
+
+        formulario.style.display = 'block';
+
+        formulario.scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+
+    async function cargarMascotas() {
+        const lista = obtener('listaMascotas');
+        lista.replaceChildren();
+
+        try {
+            mascotasActuales = await solicitar(API_PETS);
+
+            obtener('totalMascotas').textContent =
+                mascotasActuales.length;
+
+            if (mascotasActuales.length === 0) {
+                lista.appendChild(
+                    textoElemento('p', 'No hay mascotas registradas.')
+                );
+                return;
+            }
+
+            mascotasActuales.forEach(mascota => {
+                const tarjeta = document.createElement('article');
+                tarjeta.className = 'tarjeta';
+
+                tarjeta.appendChild(
+                    textoElemento('h3', mascota.especie)
+                );
+
+                tarjeta.appendChild(
+                    textoElemento('p', 'ID: ' + mascota.id)
+                );
+
+                tarjeta.appendChild(
+                    textoElemento('p', 'Color: ' + mascota.color)
+                );
+
+                tarjeta.appendChild(
+                    textoElemento('p', 'Edad: ' + mascota.edad)
+                );
+
+                tarjeta.appendChild(
+                    textoElemento('p', 'Sexo: ' + mascota.sexo)
+                );
+
+                const galeria = document.createElement('div');
+                galeria.className = 'galeria';
+
+                (mascota.img || []).forEach(ruta => {
+                    galeria.appendChild(
+                        crearImagen(ruta, 'Fotografía de mascota')
+                    );
+                });
+
+                tarjeta.appendChild(galeria);
+
+                const acciones = document.createElement('div');
+                acciones.className = 'botones-tarjeta';
+
+                acciones.appendChild(
+                    crearBoton('Editar', 'secundario', () => {
+                        editarMascota(mascota.id);
+                    })
+                );
+
+                acciones.appendChild(
+                    crearBoton('Eliminar', 'eliminar', () => {
+                        eliminarMascota(mascota.id);
+                    })
+                );
+
+                tarjeta.appendChild(acciones);
+                lista.appendChild(tarjeta);
+            });
+
+        } catch (error) {
+            mensaje('mensajeMascota', error.message, true);
+        }
+    }
+
+    function editarMascota(id) {
+        const mascota = mascotasActuales.find(m => m.id === id);
+
+        if (!mascota) {
+            mensaje('mensajeMascota', 'Mascota no encontrada', true);
+            return;
+        }
+
+        obtener('formMascota').reset();
+
+        obtener('idMascota').value = mascota.id;
+        obtener('especie').value = mascota.especie;
+        obtener('color').value = mascota.color;
+        obtener('edad').value = mascota.edad;
+        obtener('sexo').value = mascota.sexo;
+
+        const cantidad = (mascota.img || []).length;
+
+        obtener('ayudaImagenes').textContent =
+            `Esta mascota ya tiene ${cantidad} imágenes. ` +
+            `Puedes agregar hasta ${Math.max(0, 5 - cantidad)} más. ` +
+            'Las fotografías actuales se conservarán.';
+
+        obtener('tituloMascota').textContent =
+            'Modificar mascota #' + mascota.id;
+
+        obtener('guardarMascota').textContent =
+            'Actualizar Mascota';
+
+        mensaje('mensajeMascota', '');
+
+        obtener('formMascota').style.display = 'block';
+
+        obtener('formMascota').scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+
+    obtener('formMascota').addEventListener(
+        'submit',
+        async evento => {
+            evento.preventDefault();
+
+            const formulario = evento.currentTarget;
+            const id = obtener('idMascota').value;
+            const editando = id !== '';
+
+            const archivos = obtener('img').files;
+            let cantidadActual = 0;
+
+            if (editando) {
+                const mascota = mascotasActuales.find(
+                    m => m.id === Number(id)
+                );
+
+                if (!mascota) {
+                    mensaje(
+                        'mensajeMascota',
+                        'La mascota ya no está disponible. Actualiza la lista.',
+                        true
+                    );
+                    return;
+                }
+
+                cantidadActual = (mascota.img || []).length;
+            }
+
+            if (cantidadActual + archivos.length > 5) {
+                mensaje(
+                    'mensajeMascota',
+                    `No puedes superar las 5 imágenes. ` +
+                    `Actualmente tienes ${cantidadActual}.`,
+                    true
+                );
+                return;
+            }
+
+            const datos = new FormData(formulario);
+            const boton = obtener('guardarMascota');
+
+            boton.disabled = true;
+
+            mensaje('mensajeMascota', 'Guardando mascota...');
+
+            try {
+                const mascota = await solicitar(
+                    editando ? `${API_PETS}/${id}` : API_PETS,
+                    {
+                        method: editando ? 'PUT' : 'POST',
+                        body: datos
+                    }
+                );
+
+                cerrarMascota();
+
+                mensaje(
+                    'mensajeMascota',
+                    editando
+                        ? 'Mascota actualizada correctamente. ID: ' + mascota.id
+                        : 'Mascota registrada correctamente. ID: ' + mascota.id
+                );
+
+                await cargarMascotas();
+
+            } catch (error) {
+                mensaje('mensajeMascota', error.message, true);
+            } finally {
+                boton.disabled = false;
+            }
+        }
+    );
+
+    async function eliminarMascota(id) {
+        const confirmado = confirm(
+            `¿Seguro que deseas eliminar a la mascota #${id}?`
+        );
+
+        if (!confirmado) return;
+
+        try {
+            await solicitar(`${API_PETS}/${id}`, {
+                method: 'DELETE'
+            });
+
+            cerrarMascota();
+
+            mensaje(
+                'mensajeMascota',
+                'Mascota eliminada correctamente'
+            );
+
+            await cargarMascotas();
+
+        } catch (error) {
+            mensaje('mensajeMascota', error.message, true);
+        }
+    }
+
+    // Cargar registros cuando se abre la página
+    async function iniciar() {
+        await Promise.all([
+            cargarUsuarios(),
+            cargarMascotas()
+        ]);
+    }
+
+    iniciar();
+</script>
+
+</body>
+</html>
