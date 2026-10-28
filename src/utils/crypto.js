@@ -1,4 +1,3 @@
-
 import { scryptSync, randomBytes } from 'node:crypto';
 
 // Crear un hash seguro de la contraseña

@@ -1,5 +1,4 @@
 
-
 import { Router } from 'express';
 import { leerJSON, guardarJSON, eliminarArchivo } from '../utils/files.js';
 import { upload } from '../middlewares/multer.middleware.js';

@@ -48,7 +48,7 @@ Además, incluye una interfaz web desarrollada con HTML, CSS y JavaScript que pe
 ## 4. Estructura del proyecto
 
 ```text
-Nuevo proyecto Backend/
+gesti-n-de-mascotas/
 │
 ├── node_modules/
 │

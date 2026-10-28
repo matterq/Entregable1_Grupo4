@@ -1,4 +1,3 @@
-
 import { readFile, writeFile, unlink } from 'node:fs/promises';
 
 // Leer información de un archivo JSON

@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import { leerJSON, guardarJSON, eliminarArchivo } from '../utils/files.js';
 import { hashPassword } from '../utils/crypto.js';
@@ -82,7 +81,9 @@ router.post('/', upload.single('avatar'), async (req, res) => {
         const { firstname, lastname, username, password } = req.body;
 
         // Validar campos obligatorios
-        if (!firstname || !lastname || !username || !password) {
+        if ([firstname, lastname, username, password].some(
+            valor => typeof valor !== 'string' || !valor.trim()
+        )) {
             await limpiarAvatar();
 
             return res.status(400).json({
@@ -343,8 +344,6 @@ router.delete('/:id', async (req, res) => {
                 carpetaImagenes,
                 nombreArchivo
             );
-
-            console.log('Imagen que se intenta eliminar:', rutaImagen);
 
             await eliminarArchivo(rutaImagen);
         }

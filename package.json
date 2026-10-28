@@ -1,5 +1,5 @@
 {
-  "name": "nuevo-proyecto-backend",
+  "name": "entregable1-gestion-mascotas",
   "version": "1.0.0",
   "main": "src/app.js",
   "type": "module",
@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "API REST de usuarios y mascotas con Express, Multer, fs/promises y crypto",
   "dependencies": {
     "express": "^5.3.0",
     "multer": "^2.4.0"
