@@ -22,3 +22,23 @@ export async function eliminarArchivo(ruta) {
         }
     }
 }
+
+// Una cola de tareas por archivo: evita que dos peticiones
+// lean, modifiquen y escriban el mismo JSON al mismo tiempo
+const colas = new Map();
+
+export function conBloqueo(ruta, tarea) {
+    const clave = String(ruta);
+
+    // Tarea anterior de este archivo (o una promesa ya resuelta si no hay)
+    const anterior = colas.get(clave) ?? Promise.resolve();
+
+    // Ejecutar esta tarea solo cuando la anterior haya terminado
+    const actual = anterior.then(tarea);
+
+    // Guardar el final de la cola; el catch evita que un error
+    // de una tarea bloquee a las siguientes
+    colas.set(clave, actual.catch(() => {}));
+
+    return actual;
+}

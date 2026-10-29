@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { leerJSON, guardarJSON, eliminarArchivo } from '../utils/files.js';
+import { leerJSON, guardarJSON, eliminarArchivo, conBloqueo } from '../utils/files.js';
 import { hashPassword } from '../utils/crypto.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import path from 'node:path';
@@ -91,23 +91,6 @@ router.post('/', upload.single('avatar'), async (req, res) => {
             });
         }
 
-        // Leer los usuarios actuales
-        const usuarios = await leerJSON(rutaUsuarios);
-
-        // Verificar nombre de usuario duplicado
-        const existe = usuarios.some(u => u.username === username);
-
-        if (existe) {
-            await limpiarAvatar();
-
-            return res.status(400).json({
-                error: 'El nombre de usuario ya existe'
-            });
-        }
-
-        // Generar un ID automático
-        const id = Math.max(0, ...usuarios.map(u => u.id)) + 1;
-
         // Proteger contraseña
         const passwordHash = hashPassword(password);
 
@@ -116,19 +99,42 @@ router.post('/', upload.single('avatar'), async (req, res) => {
             ? `/img/users/${req.file.filename}`
             : null;
 
-        // Crear usuario
-        const nuevoUsuario = {
-            id,
-            firstname,
-            lastname,
-            username,
-            password: passwordHash,
-            avatar
-        };
+        // Leer, generar el ID y guardar deben ocurrir sin que otra
+        // petición toque users.json en medio
+        const nuevoUsuario = await conBloqueo(rutaUsuarios, async () => {
+            const usuarios = await leerJSON(rutaUsuarios);
 
-        // Guardar en users.json
-        usuarios.push(nuevoUsuario);
-        await guardarJSON(rutaUsuarios, usuarios);
+            // Verificar nombre de usuario duplicado
+            if (usuarios.some(u => u.username === username)) {
+                return null;
+            }
+
+            // Generar un ID automático
+            const id = Math.max(0, ...usuarios.map(u => u.id)) + 1;
+
+            const usuario = {
+                id,
+                firstname,
+                lastname,
+                username,
+                password: passwordHash,
+                avatar
+            };
+
+            // Guardar en users.json
+            usuarios.push(usuario);
+            await guardarJSON(rutaUsuarios, usuarios);
+
+            return usuario;
+        });
+
+        if (!nuevoUsuario) {
+            await limpiarAvatar();
+
+            return res.status(400).json({
+                error: 'El nombre de usuario ya existe'
+            });
+        }
 
         // Responder sin mostrar contraseña
         const { password: _, ...usuarioPublico } = nuevoUsuario;
@@ -177,83 +183,91 @@ router.put('/:id', upload.single('avatar'), async (req, res) => {
             });
         }
 
-        // Leer usuarios
-        const usuarios = await leerJSON(rutaUsuarios);
-
-        // Buscar usuario por ID
-        const indice = usuarios.findIndex(u => u.id === id);
-
-        if (indice === -1) {
-            await limpiarAvatar();
-
-            return res.status(404).json({
-                error: 'Usuario no encontrado'
-            });
-        }
-
         const { firstname, lastname, username, password } = req.body;
 
-        // Validar campos enviados
-        if ([firstname, lastname, username, password].some(
-            valor => valor !== undefined &&
-            (typeof valor !== 'string' || !valor.trim())
-        )) {
+        // Leer, modificar y guardar sin interrupciones de otras peticiones
+        const resultado = await conBloqueo(rutaUsuarios, async () => {
+            const usuarios = await leerJSON(rutaUsuarios);
+
+            // Buscar usuario por ID
+            const indice = usuarios.findIndex(u => u.id === id);
+
+            if (indice === -1) {
+                return { status: 404, error: 'Usuario no encontrado' };
+            }
+
+            // Validar campos enviados
+            if ([firstname, lastname, username, password].some(
+                valor => valor !== undefined &&
+                (typeof valor !== 'string' || !valor.trim())
+            )) {
+                return {
+                    status: 400,
+                    error: 'Los campos enviados no pueden estar vacíos'
+                };
+            }
+
+            // Evitar nombres de usuario duplicados
+            if (username && usuarios.some(
+                u => u.id !== id && u.username === username
+            )) {
+                return {
+                    status: 400,
+                    error: 'El nombre de usuario ya existe'
+                };
+            }
+
+            // Actualizar los datos recibidos
+            if (firstname !== undefined) {
+                usuarios[indice].firstname = firstname;
+            }
+
+            if (lastname !== undefined) {
+                usuarios[indice].lastname = lastname;
+            }
+
+            if (username !== undefined) {
+                usuarios[indice].username = username;
+            }
+
+            // Proteger la contraseña si se modifica
+            if (password !== undefined) {
+                usuarios[indice].password = hashPassword(password);
+            }
+
+            // Guardar el avatar anterior
+            const avatarAnterior = usuarios[indice].avatar;
+
+            // Actualizar avatar si se envía uno nuevo
+            if (req.file) {
+                usuarios[indice].avatar =
+                    `/img/users/${req.file.filename}`;
+            }
+
+            // Guardar cambios en users.json
+            await guardarJSON(rutaUsuarios, usuarios);
+
+            return { usuario: usuarios[indice], avatarAnterior };
+        });
+
+        // Si hubo un error de validación o no existe el usuario
+        if (resultado.error) {
             await limpiarAvatar();
 
-            return res.status(400).json({
-                error: 'Los campos enviados no pueden estar vacíos'
+            return res.status(resultado.status).json({
+                error: resultado.error
             });
         }
 
-        // Evitar nombres de usuario duplicados
-        if (username && usuarios.some(
-            u => u.id !== id && u.username === username
-        )) {
-            await limpiarAvatar();
-
-            return res.status(400).json({
-                error: 'El nombre de usuario ya existe'
-            });
-        }
-
-        // Actualizar los datos recibidos
-        if (firstname !== undefined) {
-            usuarios[indice].firstname = firstname;
-        }
-
-        if (lastname !== undefined) {
-            usuarios[indice].lastname = lastname;
-        }
-
-        if (username !== undefined) {
-            usuarios[indice].username = username;
-        }
-
-        // Proteger la contraseña si se modifica
-        if (password !== undefined) {
-            usuarios[indice].password = hashPassword(password);
-        }
-
-        // Guardar el avatar anterior
-        const avatarAnterior = usuarios[indice].avatar;
-
-        // Actualizar avatar si se envía uno nuevo
-        if (req.file) {
-            usuarios[indice].avatar =
-                `/img/users/${req.file.filename}`;
-        }
-
-        // Guardar cambios en users.json
-        await guardarJSON(rutaUsuarios, usuarios);
         cambiosGuardados = true;
 
         // Eliminar el avatar anterior después de guardar
-        if (req.file && avatarAnterior) {
+        if (req.file && resultado.avatarAnterior) {
             const carpetaImagenes = fileURLToPath(
                 new URL('../../public/img/users/', import.meta.url)
             );
 
-            const nombreArchivo = path.basename(avatarAnterior);
+            const nombreArchivo = path.basename(resultado.avatarAnterior);
 
             const rutaImagen = path.join(
                 carpetaImagenes,
@@ -273,7 +287,7 @@ router.put('/:id', upload.single('avatar'), async (req, res) => {
         }
 
         // Responder sin contraseña
-        const { password: _, ...usuarioPublico } = usuarios[indice];
+        const { password: _, ...usuarioPublico } = resultado.usuario;
 
         res.status(200).json(usuarioPublico);
 
@@ -311,26 +325,31 @@ router.delete('/:id', async (req, res) => {
             });
         }
 
-        // Leer usuarios
-        const usuarios = await leerJSON(rutaUsuarios);
+        // Leer, eliminar y guardar sin interrupciones de otras peticiones
+        const usuarioEliminado = await conBloqueo(rutaUsuarios, async () => {
+            const usuarios = await leerJSON(rutaUsuarios);
 
-        // Buscar usuario
-        const indice = usuarios.findIndex(u => u.id === id);
+            // Buscar usuario
+            const indice = usuarios.findIndex(u => u.id === id);
 
-        if (indice === -1) {
+            if (indice === -1) {
+                return null;
+            }
+
+            // Eliminar usuario del arreglo
+            const [eliminado] = usuarios.splice(indice, 1);
+
+            // Guardar cambios en users.json
+            await guardarJSON(rutaUsuarios, usuarios);
+
+            return eliminado;
+        });
+
+        if (!usuarioEliminado) {
             return res.status(404).json({
                 error: 'Usuario no encontrado'
             });
         }
-
-        // Guardar los datos del usuario antes de eliminarlo
-        const usuarioEliminado = usuarios[indice];
-
-        // Eliminar usuario del arreglo
-        usuarios.splice(indice, 1);
-
-        // Guardar cambios en users.json
-        await guardarJSON(rutaUsuarios, usuarios);
 
         // Eliminar la imagen del usuario
         if (usuarioEliminado.avatar) {

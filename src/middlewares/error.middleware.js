@@ -33,6 +33,13 @@ export function manejarErrores(error, req, res, next) {
         });
     }
 
+    // JSON mal formado en el cuerpo de la petición
+    if (error.type === 'entity.parse.failed') {
+        return res.status(400).json({
+            error: 'El cuerpo de la petición no es un JSON válido'
+        });
+    }
+
     // Otros errores del servidor
     console.error(error);
 

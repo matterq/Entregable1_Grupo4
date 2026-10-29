@@ -1,6 +1,5 @@
-
 import { Router } from 'express';
-import { leerJSON, guardarJSON, eliminarArchivo } from '../utils/files.js';
+import { leerJSON, guardarJSON, eliminarArchivo, conBloqueo } from '../utils/files.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +8,17 @@ const router = Router();
 
 // Ubicación del archivo de mascotas
 const rutaMascotas = new URL('../data/pets.json', import.meta.url);
+
+// Un texto es válido si es string y no está vacío ni solo con espacios
+const textoValido = valor =>
+    typeof valor === 'string' && valor.trim() !== '';
+
+// La edad es válida si es un entero mayor o igual a 0
+// (se rechaza el texto vacío, porque Number('') daría 0)
+const edadValida = valor =>
+    String(valor).trim() !== '' &&
+    Number.isInteger(Number(valor)) &&
+    Number(valor) >= 0;
 
 // Consultar todas las mascotas
 router.get('/', async (req, res) => {
@@ -77,8 +87,9 @@ router.post('/', upload.array('img', 5), async (req, res) => {
     try {
         const { especie, color, edad, sexo } = req.body;
 
-        // Validar campos obligatorios
-        if (!especie || !color || !edad || !sexo) {
+        // Validar campos obligatorios (no vacíos ni solo espacios)
+        if (![especie, color, sexo].every(textoValido) ||
+            edad === undefined || String(edad).trim() === '') {
             await limpiarImagenes();
 
             return res.status(400).json({
@@ -87,9 +98,7 @@ router.post('/', upload.array('img', 5), async (req, res) => {
         }
 
         // Validar edad
-        const edadNumero = Number(edad);
-
-        if (!Number.isInteger(edadNumero) || edadNumero < 0) {
+        if (!edadValida(edad)) {
             await limpiarImagenes();
 
             return res.status(400).json({
@@ -97,30 +106,36 @@ router.post('/', upload.array('img', 5), async (req, res) => {
             });
         }
 
-        // Leer mascotas registradas
-        const mascotas = await leerJSON(rutaMascotas);
-
-        // Crear ID automático
-        const id = Math.max(0, ...mascotas.map(m => m.id)) + 1;
+        const edadNumero = Number(edad);
 
         // Obtener rutas de las imágenes
         const img = (req.files || []).map(
             archivo => `/img/pets/${archivo.filename}`
         );
 
-        // Crear mascota
-        const nuevaMascota = {
-            id,
-            especie,
-            color,
-            edad: edadNumero,
-            sexo,
-            img
-        };
+        // Leer, generar el ID y guardar deben ocurrir sin que otra
+        // petición toque pets.json en medio
+        const nuevaMascota = await conBloqueo(rutaMascotas, async () => {
+            const mascotas = await leerJSON(rutaMascotas);
 
-        // Guardar en pets.json
-        mascotas.push(nuevaMascota);
-        await guardarJSON(rutaMascotas, mascotas);
+            // Crear ID automático
+            const id = Math.max(0, ...mascotas.map(m => m.id)) + 1;
+
+            const mascota = {
+                id,
+                especie,
+                color,
+                edad: edadNumero,
+                sexo,
+                img
+            };
+
+            // Guardar en pets.json
+            mascotas.push(mascota);
+            await guardarJSON(rutaMascotas, mascotas);
+
+            return mascota;
+        });
 
         // Responder con la mascota creada
         res.status(201).json(nuevaMascota);
@@ -168,83 +183,95 @@ router.put('/:id', upload.array('img', 5), async (req, res) => {
             });
         }
 
-        // Leer mascotas registradas
-        const mascotas = await leerJSON(rutaMascotas);
-
-        // Buscar mascota por ID
-        const indice = mascotas.findIndex(m => m.id === id);
-
-        if (indice === -1) {
-            await limpiarImagenes();
-
-            return res.status(404).json({
-                error: 'Mascota no encontrada'
-            });
-        }
-
         const { especie, color, edad, sexo } = req.body;
-
-        // Contar imágenes existentes y nuevas
-        const imagenesActuales = mascotas[indice].img || [];
         const imagenesNuevas = req.files || [];
 
-        const totalImagenes =
-            imagenesActuales.length + imagenesNuevas.length;
+        // Leer, modificar y guardar sin interrupciones de otras peticiones
+        const resultado = await conBloqueo(rutaMascotas, async () => {
+            const mascotas = await leerJSON(rutaMascotas);
 
-        // Máximo cinco imágenes por mascota
-        if (totalImagenes > 5) {
+            // Buscar mascota por ID
+            const indice = mascotas.findIndex(m => m.id === id);
+
+            if (indice === -1) {
+                return { status: 404, error: 'Mascota no encontrada' };
+            }
+
+            // Los campos de texto enviados no pueden estar vacíos
+            if ([especie, color, sexo].some(
+                valor => valor !== undefined && !textoValido(valor)
+            )) {
+                return {
+                    status: 400,
+                    error: 'Los campos enviados no pueden estar vacíos'
+                };
+            }
+
+            // Contar imágenes existentes y nuevas
+            const imagenesActuales = mascotas[indice].img || [];
+
+            // Máximo cinco imágenes por mascota
+            if (imagenesActuales.length + imagenesNuevas.length > 5) {
+                return {
+                    status: 400,
+                    error: 'Una mascota no puede tener más de 5 imágenes'
+                };
+            }
+
+            // Validar edad
+            if (edad !== undefined) {
+                if (!edadValida(edad)) {
+                    return {
+                        status: 400,
+                        error: 'La edad debe ser un entero válido'
+                    };
+                }
+
+                mascotas[indice].edad = Number(edad);
+            }
+
+            // Actualizar los demás campos
+            if (especie !== undefined) {
+                mascotas[indice].especie = especie;
+            }
+
+            if (color !== undefined) {
+                mascotas[indice].color = color;
+            }
+
+            if (sexo !== undefined) {
+                mascotas[indice].sexo = sexo;
+            }
+
+            // Agregar las nuevas imágenes
+            if (imagenesNuevas.length > 0) {
+                const nuevasRutas = imagenesNuevas.map(
+                    archivo => `/img/pets/${archivo.filename}`
+                );
+
+                mascotas[indice].img = [
+                    ...imagenesActuales,
+                    ...nuevasRutas
+                ];
+            }
+
+            // Guardar cambios
+            await guardarJSON(rutaMascotas, mascotas);
+
+            return { mascota: mascotas[indice] };
+        });
+
+        // Si hubo un error de validación o no existe la mascota
+        if (resultado.error) {
             await limpiarImagenes();
 
-            return res.status(400).json({
-                error: 'Una mascota no puede tener más de 5 imágenes'
+            return res.status(resultado.status).json({
+                error: resultado.error
             });
         }
 
-        // Validar edad
-        if (edad !== undefined) {
-            const edadNumero = Number(edad);
-
-            if (!Number.isInteger(edadNumero) || edadNumero < 0) {
-                await limpiarImagenes();
-
-                return res.status(400).json({
-                    error: 'La edad debe ser un entero válido'
-                });
-            }
-
-            mascotas[indice].edad = edadNumero;
-        }
-
-        // Actualizar los demás campos
-        if (especie !== undefined) {
-            mascotas[indice].especie = especie;
-        }
-
-        if (color !== undefined) {
-            mascotas[indice].color = color;
-        }
-
-        if (sexo !== undefined) {
-            mascotas[indice].sexo = sexo;
-        }
-
-        // Agregar las nuevas imágenes
-        if (imagenesNuevas.length > 0) {
-            const nuevasRutas = imagenesNuevas.map(
-                archivo => `/img/pets/${archivo.filename}`
-            );
-
-            mascotas[indice].img = [
-                ...imagenesActuales,
-                ...nuevasRutas
-            ];
-        }
-
-        // Guardar cambios
-        await guardarJSON(rutaMascotas, mascotas);
-
         // Responder
-        res.status(200).json(mascotas[indice]);
+        res.status(200).json(resultado.mascota);
 
     } catch (error) {
         console.error(error);
@@ -273,27 +300,31 @@ router.delete('/:id', async (req, res) => {
             });
         }
 
-        const mascotas = await leerJSON(rutaMascotas);
+        // Leer, eliminar y guardar sin interrupciones de otras peticiones
+        const mascotaEliminada = await conBloqueo(rutaMascotas, async () => {
+            const mascotas = await leerJSON(rutaMascotas);
 
-        const indice = mascotas.findIndex(m => m.id === id);
+            const indice = mascotas.findIndex(m => m.id === id);
 
-        if (indice === -1) {
+            if (indice === -1) {
+                return null;
+            }
+
+            // Eliminar mascota del arreglo
+            const [eliminada] = mascotas.splice(indice, 1);
+
+            // Guardar cambios en pets.json
+            await guardarJSON(rutaMascotas, mascotas);
+
+            return eliminada;
+        });
+
+        if (!mascotaEliminada) {
             return res.status(404).json({
                 error: 'Mascota no encontrada'
             });
         }
 
-       
-        // Obtener la mascota antes de eliminarla
-        const mascotaEliminada = mascotas[indice];
-
-        // Eliminar mascota del arreglo
-        mascotas.splice(indice, 1);
-
-        // Guardar cambios en pets.json
-        await guardarJSON(rutaMascotas, mascotas);
-
-       
         // Eliminar las imágenes asociadas a la mascota
         const carpetaImagenes = fileURLToPath(
             new URL('../../public/img/pets/', import.meta.url)
@@ -315,7 +346,6 @@ router.delete('/:id', async (req, res) => {
 
             await eliminarArchivo(rutaImagen);
         }
-
 
         res.status(200).json({
             mensaje: 'Mascota eliminada correctamente'
