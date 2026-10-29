@@ -43,6 +43,7 @@ Además, incluye una interfaz web desarrollada con HTML, CSS y JavaScript que pe
 - Consultar una mascota mediante su identificador.
 - Modificar la información de una mascota.
 - Agregar nuevas fotografías sin superar el límite de cinco imágenes.
+- Quitar fotografías individuales de una mascota o reemplazarlas por otras en la misma petición.
 - Eliminar mascotas y sus fotografías asociadas.
 
 ## 4. Estructura del proyecto
@@ -148,6 +149,20 @@ Para registrar y actualizar usuarios con fotografías se utiliza `multipart/form
 
 Para registrar y actualizar mascotas con fotografías se utiliza `multipart/form-data`.
 
+#### Modificar las fotografías de una mascota
+
+En `PUT /api/pets/:id` se pueden combinar dos campos:
+
+| Campo | Efecto |
+|---|---|
+| `img` | Agrega las fotografías nuevas (archivos). |
+| `eliminar` | Quita fotografías ya guardadas. Recibe la ruta tal como aparece en la mascota, por ejemplo `/img/pets/1793000000000-123456789.jpg`. Se puede repetir el campo para quitar varias. |
+
+- Al enviar ambos campos en la misma petición, se reemplazan fotografías: primero se quitan las indicadas y luego se agregan las nuevas.
+- El límite de cinco fotografías se calcula con las que quedan después de quitar, más las nuevas.
+- Solo se pueden quitar fotografías que pertenezcan a esa mascota; de lo contrario, la API responde `400`.
+- Las fotografías quitadas también se eliminan de `public/img/pets`.
+
 ## 7. Gestión de imágenes
 
 El proyecto utiliza Multer para almacenar las fotografías.
@@ -181,12 +196,14 @@ Cada registro contiene un identificador numérico asignado automáticamente por 
 El sistema implementa las siguientes medidas:
 
 - Hash de contraseñas mediante `crypto.scryptSync`.
-- Validación de campos obligatorios.
+- Validación de campos obligatorios, rechazando textos vacíos o formados solo por espacios.
 - Verificación de nombres de usuario duplicados.
 - Validación de identificadores.
 - Validación de edades de mascotas.
 - Restricción de formatos y tamaños de archivos.
 - Manejo de errores de Multer.
+- Respuesta `400` cuando el cuerpo de la petición es un JSON mal formado.
+- Cola de escritura por archivo, para que las peticiones simultáneas no sobrescriban los datos de `users.json` y `pets.json`.
 - Limpieza de archivos subidos cuando determinadas operaciones no se completan correctamente.
 - Confirmación antes de eliminar registros desde la interfaz web.
 

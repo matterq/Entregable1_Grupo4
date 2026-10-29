@@ -183,8 +183,14 @@ router.put('/:id', upload.array('img', 5), async (req, res) => {
             });
         }
 
-        const { especie, color, edad, sexo } = req.body;
+        const { especie, color, edad, sexo, eliminar } = req.body;
         const imagenesNuevas = req.files || [];
+
+        // 'eliminar' puede llegar como un solo texto o como una lista
+        // de rutas; se convierte siempre en una lista sin repetidos
+        const rutasAEliminar = eliminar === undefined
+            ? []
+            : [...new Set([].concat(eliminar))];
 
         // Leer, modificar y guardar sin interrupciones de otras peticiones
         const resultado = await conBloqueo(rutaMascotas, async () => {
@@ -207,11 +213,36 @@ router.put('/:id', upload.array('img', 5), async (req, res) => {
                 };
             }
 
-            // Contar imágenes existentes y nuevas
+            // Las rutas a eliminar deben ser textos no vacíos
+            if (!rutasAEliminar.every(textoValido)) {
+                return {
+                    status: 400,
+                    error: 'El campo eliminar debe contener rutas de imágenes'
+                };
+            }
+
             const imagenesActuales = mascotas[indice].img || [];
 
-            // Máximo cinco imágenes por mascota
-            if (imagenesActuales.length + imagenesNuevas.length > 5) {
+            // Solo se pueden eliminar imágenes que pertenezcan a esta mascota
+            const noPertenecen = rutasAEliminar.filter(
+                ruta => !imagenesActuales.includes(ruta)
+            );
+
+            if (noPertenecen.length > 0) {
+                return {
+                    status: 400,
+                    error: 'La imagen no pertenece a esta mascota: ' +
+                        noPertenecen.join(', ')
+                };
+            }
+
+            // Imágenes que se conservan después de eliminar
+            const imagenesRestantes = imagenesActuales.filter(
+                ruta => !rutasAEliminar.includes(ruta)
+            );
+
+            // Máximo cinco imágenes por mascota (contando solo las que quedan)
+            if (imagenesRestantes.length + imagenesNuevas.length > 5) {
                 return {
                     status: 400,
                     error: 'Una mascota no puede tener más de 5 imágenes'
@@ -243,14 +274,14 @@ router.put('/:id', upload.array('img', 5), async (req, res) => {
                 mascotas[indice].sexo = sexo;
             }
 
-            // Agregar las nuevas imágenes
-            if (imagenesNuevas.length > 0) {
+            // Quitar las imágenes indicadas y agregar las nuevas
+            if (rutasAEliminar.length > 0 || imagenesNuevas.length > 0) {
                 const nuevasRutas = imagenesNuevas.map(
                     archivo => `/img/pets/${archivo.filename}`
                 );
 
                 mascotas[indice].img = [
-                    ...imagenesActuales,
+                    ...imagenesRestantes,
                     ...nuevasRutas
                 ];
             }
@@ -268,6 +299,22 @@ router.put('/:id', upload.array('img', 5), async (req, res) => {
             return res.status(resultado.status).json({
                 error: resultado.error
             });
+        }
+
+        // Borrar del disco las imágenes quitadas (ya se guardó el JSON)
+        const carpetaImagenes = fileURLToPath(
+            new URL('../../public/img/pets/', import.meta.url)
+        );
+
+        for (const ruta of rutasAEliminar) {
+            try {
+                await eliminarArchivo(
+                    path.join(carpetaImagenes, path.basename(ruta))
+                );
+            } catch (errorImagen) {
+                // Si falla, se registra sin deshacer los cambios guardados
+                console.error('Error al eliminar imagen:', errorImagen);
+            }
         }
 
         // Responder
