@@ -1,929 +1,3115 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestión de Usuarios y Mascotas</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      // Aplica el tema guardado (o el del sistema) antes de pintar la página
+      (function () {
+        var tema;
+        try {
+          tema = localStorage.getItem("tema");
+        } catch (e) {}
+        if (tema !== "dark" && tema !== "light") {
+          tema = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+        document.documentElement.setAttribute("data-theme", tema);
+      })();
+    </script>
+
     <style>
-        * {
-            box-sizing: border-box;
-        }
+      /* =========================================================
+           TEMAS: claro (día) y oscuro (noche)
+           ========================================================= */
+      :root {
+        color-scheme: light;
 
-        body {
-            margin: 0;
-            padding: 30px 15px;
-            font-family: Arial, sans-serif;
-            background: #f1f5f9;
-            color: #1e293b;
-        }
+        --texto: #0f172a;
+        --texto-suave: #475569;
+        --etiqueta: #334155;
 
-        .contenedor {
-            max-width: 1050px;
-            margin: auto;
-        }
+        --vidrio: rgba(255, 255, 255, 0.74);
+        --vidrio-interno: rgba(255, 255, 255, 0.92);
+        --borde-vidrio: rgba(255, 255, 255, 0.85);
+        --linea: rgba(148, 163, 184, 0.35);
+        --pie-tarjeta: rgba(241, 245, 249, 0.75);
+        --formulario: rgba(238, 242, 255, 0.65);
+        --formulario-m: rgba(240, 253, 250, 0.7);
 
-        header {
-            text-align: center;
-            padding: 30px 15px;
-        }
+        --campo: #ffffff;
+        --campo-borde: #cbd5e1;
+        --campo-borde-hover: #94a3b8;
 
-        h1 {
-            color: #1e3a8a;
-            margin-bottom: 10px;
-        }
+        --primario: #4f46e5;
+        --primario-2: #7c3aed;
+        --primario-oscuro: #4338ca;
+        --primario-claro: rgba(99, 102, 241, 0.12);
+        --acento-texto: #4f46e5;
 
-        h2 {
-            margin-top: 0;
-        }
+        --mascota: #0d9488;
+        --mascota-2: #0ea5e9;
+        --mascota-oscuro: #0f766e;
+        --mascota-claro: rgba(20, 184, 166, 0.15);
 
+        --peligro: #e11d48;
+        --peligro-claro: rgba(244, 63, 94, 0.1);
+        --exito: #059669;
+        --exito-claro: rgba(16, 185, 129, 0.12);
+        --exito-borde: rgba(16, 185, 129, 0.35);
+        --exito-texto: #047857;
+        --error-texto: #be123c;
+        --error-borde: rgba(244, 63, 94, 0.35);
+        --info-texto: #4338ca;
+        --info-borde: rgba(99, 102, 241, 0.35);
+
+        --macho-fondo: #dbeafe;
+        --macho-texto: #1d4ed8;
+        --hembra-fondo: #fce7f3;
+        --hembra-texto: #be185d;
+        --neutra-fondo: #e2e8f0;
+        --neutra-texto: #334155;
+
+        --dialogo: #ffffff;
+
+        --hero-texto: #0b2447;
+        --hero-sub: #1e3a5f;
+        --hero-titulo: linear-gradient(120deg, #0b2447 10%, #3730a3 90%);
+        --chip-hero-fondo: rgba(255, 255, 255, 0.55);
+        --chip-hero-borde: rgba(255, 255, 255, 0.8);
+
+        --sombra-sm:
+          0 1px 2px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.06);
+        --sombra-md: 0 10px 30px -8px rgba(30, 64, 120, 0.25);
+        --sombra-lg: 0 30px 60px -15px rgba(15, 23, 42, 0.4);
+
+        --acento: #4f46e5;
+        --brillo: rgba(79, 70, 229, 0.16);
+        --resplandor: rgba(79, 70, 229, 0.45);
+
+        --radio: 16px;
+      }
+
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+
+        --texto: #e8eefc;
+        --texto-suave: #9fb0cc;
+        --etiqueta: #c7d4ea;
+
+        --vidrio: rgba(10, 20, 44, 0.58);
+        --vidrio-interno: rgba(18, 31, 62, 0.72);
+        --borde-vidrio: rgba(148, 197, 255, 0.16);
+        --linea: rgba(148, 176, 220, 0.18);
+        --pie-tarjeta: rgba(255, 255, 255, 0.04);
+        --formulario: rgba(99, 102, 241, 0.08);
+        --formulario-m: rgba(20, 184, 166, 0.08);
+
+        --campo: rgba(4, 10, 28, 0.6);
+        --campo-borde: rgba(148, 176, 220, 0.3);
+        --campo-borde-hover: rgba(148, 176, 220, 0.55);
+
+        --primario: #6366f1;
+        --primario-2: #8b5cf6;
+        --primario-oscuro: #4f46e5;
+        --primario-claro: rgba(129, 140, 248, 0.16);
+        --acento-texto: #a5b4fc;
+
+        --mascota: #14b8a6;
+        --mascota-2: #38bdf8;
+        --mascota-oscuro: #0d9488;
+        --mascota-claro: rgba(45, 212, 191, 0.16);
+
+        --peligro: #f43f5e;
+        --peligro-claro: rgba(244, 63, 94, 0.16);
+        --exito-claro: rgba(16, 185, 129, 0.14);
+        --exito-borde: rgba(52, 211, 153, 0.35);
+        --exito-texto: #6ee7b7;
+        --error-texto: #fda4af;
+        --error-borde: rgba(251, 113, 133, 0.4);
+        --info-texto: #a5b4fc;
+        --info-borde: rgba(129, 140, 248, 0.4);
+
+        --macho-fondo: rgba(59, 130, 246, 0.2);
+        --macho-texto: #93c5fd;
+        --hembra-fondo: rgba(236, 72, 153, 0.2);
+        --hembra-texto: #f9a8d4;
+        --neutra-fondo: rgba(148, 163, 184, 0.2);
+        --neutra-texto: #cbd5e1;
+
+        --dialogo: #0f1a36;
+
+        --hero-texto: #ffffff;
+        --hero-sub: #c3d4f5;
+        --hero-titulo: linear-gradient(120deg, #ffffff 20%, #bfdbfe 100%);
+        --chip-hero-fondo: rgba(255, 255, 255, 0.08);
+        --chip-hero-borde: rgba(255, 255, 255, 0.22);
+
+        --sombra-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --sombra-md: 0 12px 34px -8px rgba(0, 0, 0, 0.6);
+        --sombra-lg: 0 30px 70px -15px rgba(0, 0, 0, 0.8);
+
+        --acento: #818cf8;
+        --brillo: rgba(129, 140, 248, 0.2);
+        --resplandor: rgba(99, 102, 241, 0.55);
+      }
+
+      .mascotas,
+      .estadistica.mascotas {
+        --acento: #14b8a6;
+        --brillo: rgba(20, 184, 166, 0.18);
+        --resplandor: rgba(20, 184, 166, 0.5);
+      }
+
+      /* Transición suave al cambiar de tema */
+      html.cambiando *,
+      html.cambiando *::before,
+      html.cambiando *::after {
+        transition:
+          background-color 0.6s ease,
+          color 0.6s ease,
+          border-color 0.6s ease,
+          box-shadow 0.6s ease,
+          opacity 0.6s ease !important;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          Arial,
+          sans-serif;
+        background: #061633;
+        color: var(--texto);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      :root[data-theme="light"] body {
+        background: #cfe9ff;
+      }
+
+      svg {
+        display: block;
+        flex-shrink: 0;
+      }
+
+      /* =========================================================
+           FONDO DE VIDEO
+           Un velo encima del video lo oscurece (noche) o lo aclara
+           (día) para que los textos siempre se lean bien.
+           ========================================================= */
+      #fondo {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+        background: linear-gradient(
+          180deg,
+          #02040f 0%,
+          #05122b 30%,
+          #093061 70%,
+          #0e4577 100%
+        );
+        transition: background 1s ease;
+      }
+
+      :root[data-theme="light"] #fondo {
+        background: linear-gradient(
+          180deg,
+          #5aaeff 0%,
+          #8ecbff 45%,
+          #b5dcff 80%,
+          #a9d3fa 100%
+        );
+      }
+
+      #fondo > * {
+        position: absolute;
+      }
+
+      .video-fondo {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 50%;
+        transition: filter 1s ease;
+      }
+
+      .velo-video {
+        inset: 0;
+        transition: background 1s ease;
+      }
+
+      /* Noche: azul neón más vivo; se oscurece la izquierda (título) y la base */
+      :root[data-theme="dark"] .video-fondo {
+        filter: saturate(1.35) brightness(0.95);
+      }
+
+      :root[data-theme="dark"] .velo-video {
+        background:
+          linear-gradient(
+            90deg,
+            rgba(2, 8, 30, 0.74) 0%,
+            rgba(2, 8, 30, 0.42) 42%,
+            rgba(2, 8, 30, 0.08) 100%
+          ),
+          linear-gradient(
+            180deg,
+            rgba(2, 8, 30, 0.22) 0%,
+            rgba(2, 8, 30, 0) 30%,
+            rgba(2, 8, 30, 0.5) 100%
+          );
+      }
+
+      /* Día: el video se mezcla ("screen") con el cielo celeste: lo negro
+           desaparece y las medusas quedan como luz clara */
+      :root[data-theme="light"] .video-fondo {
+        mix-blend-mode: screen;
+        filter: saturate(1.25) brightness(1.3);
+      }
+
+      :root[data-theme="light"] .velo-video {
+        background:
+          linear-gradient(
+            90deg,
+            rgba(240, 249, 255, 0.72) 0%,
+            rgba(232, 244, 255, 0.4) 45%,
+            rgba(225, 240, 255, 0) 100%
+          ),
+          linear-gradient(
+            180deg,
+            rgba(240, 249, 255, 0.25) 0%,
+            rgba(240, 249, 255, 0) 35%,
+            rgba(220, 236, 255, 0.35) 100%
+          );
+      }
+
+      /* =========================================================
+           BARRA SUPERIOR
+           ========================================================= */
+      .barra {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: var(--vidrio);
+        backdrop-filter: blur(16px) saturate(1.4);
+        -webkit-backdrop-filter: blur(16px) saturate(1.4);
+        border-bottom: 1px solid var(--borde-vidrio);
+      }
+
+      .barra-interna {
+        max-width: 1120px;
+        margin: auto;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .marca {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .marca-icono {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--primario), var(--primario-2));
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
+      }
+
+      .barra-derecha {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .navegacion {
+        display: flex;
+        gap: 4px;
+      }
+
+      .navegacion a {
+        padding: 8px 14px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--texto-suave);
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+
+      .navegacion a:hover {
+        background: var(--primario-claro);
+        color: var(--acento-texto);
+      }
+
+      /* Botón de tema */
+      button.tema-btn {
+        position: relative;
+        gap: 8px;
+        padding: 8px 14px 8px 10px;
+        border-radius: 999px;
+        color: var(--texto);
+        background: var(--vidrio-interno);
+        border: 1px solid var(--linea);
+        box-shadow: var(--sombra-sm);
+      }
+
+      button.tema-btn:hover {
+        background: var(--vidrio-interno);
+        border-color: var(--acento);
+        box-shadow:
+          0 0 0 4px var(--brillo),
+          var(--sombra-sm);
+      }
+
+      .tema-iconos {
+        position: relative;
+        width: 20px;
+        height: 20px;
+      }
+
+      .tema-iconos svg {
+        position: absolute;
+        inset: 0;
+        transition:
+          transform 0.6s cubic-bezier(0.5, 0, 0.2, 1),
+          opacity 0.4s ease;
+      }
+
+      .icono-sol {
+        color: #fbbf24;
+      }
+      .icono-luna {
+        color: #6366f1;
+      }
+
+      /* En oscuro se ofrece el sol (cambiar a claro); en claro, la luna */
+      :root[data-theme="dark"] .icono-luna {
+        transform: rotate(-90deg) scale(0.3);
+        opacity: 0;
+      }
+      :root[data-theme="light"] .icono-sol {
+        transform: rotate(90deg) scale(0.3);
+        opacity: 0;
+      }
+
+      /* =========================================================
+           CABECERA
+           ========================================================= */
+      .hero {
+        padding: 72px 20px 44px;
+      }
+
+      .hero-interno {
+        max-width: 1120px;
+        margin: auto;
+      }
+
+      .hero-etiqueta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--hero-texto);
+        background: var(--chip-hero-fondo);
+        border: 1px solid var(--chip-hero-borde);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        margin-bottom: 20px;
+      }
+
+      .hero h1 {
+        margin: 0 0 14px;
+        max-width: 640px;
+        font-size: clamp(32px, 5.2vw, 56px);
+        font-weight: 800;
+        letter-spacing: -0.035em;
+        line-height: 1.08;
+        color: var(--hero-texto);
+        background: var(--hero-titulo);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 480px;
+        font-size: 18px;
+        color: var(--hero-sub);
+      }
+
+      .contenedor {
+        max-width: 1120px;
+        margin: auto;
+        padding: 0 20px 40px;
+      }
+
+      /* =========================================================
+           ESTADÍSTICAS
+           ========================================================= */
+      .resumen {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
+      }
+
+      .estadistica {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 24px;
+        background: var(--vidrio);
+        backdrop-filter: blur(16px) saturate(1.4);
+        -webkit-backdrop-filter: blur(16px) saturate(1.4);
+        border-radius: var(--radio);
+        box-shadow: var(--sombra-md);
+        border: 1px solid var(--borde-vidrio);
+        transition:
+          transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+          box-shadow 0.3s,
+          border-color 0.3s;
+        animation: aparecer 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      .estadistica.mascotas {
+        animation-delay: 0.1s;
+      }
+
+      .estadistica::before,
+      .tarjeta::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+        background: radial-gradient(
+          300px circle at var(--mx, 50%) var(--my, 50%),
+          var(--brillo),
+          transparent 65%
+        );
+      }
+
+      .estadistica:hover {
+        transform: translateY(-6px);
+        border-color: var(--acento);
+        box-shadow:
+          0 0 0 1px var(--acento),
+          0 24px 50px -14px var(--resplandor);
+      }
+
+      .estadistica:hover::before,
+      .tarjeta:hover::before {
+        opacity: 1;
+      }
+
+      .estadistica-icono {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        transition: transform 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
+      }
+
+      .estadistica:hover .estadistica-icono {
+        transform: scale(1.12) rotate(-6deg);
+      }
+
+      .estadistica.usuarios .estadistica-icono {
+        background: var(--primario-claro);
+        color: var(--acento-texto);
+      }
+      .estadistica.mascotas .estadistica-icono {
+        background: var(--mascota-claro);
+        color: var(--mascota);
+      }
+
+      .estadistica strong {
+        display: block;
+        font-size: 38px;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .estadistica span {
+        display: block;
+        margin-top: 6px;
+        color: var(--texto-suave);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      /* =========================================================
+           SECCIONES
+           ========================================================= */
+      .seccion {
+        background: var(--vidrio);
+        backdrop-filter: blur(18px) saturate(1.4);
+        -webkit-backdrop-filter: blur(18px) saturate(1.4);
+        border: 1px solid var(--borde-vidrio);
+        border-radius: 22px;
+        box-shadow: var(--sombra-md);
+        margin-bottom: 32px;
+        overflow: hidden;
+        scroll-margin-top: 80px;
+        animation: aparecer 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both;
+      }
+
+      .seccion.mascotas {
+        animation-delay: 0.3s;
+      }
+
+      .seccion-cabecera {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 24px 28px;
+        border-bottom: 1px solid var(--linea);
+      }
+
+      .seccion-titulo {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .seccion-icono {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        transition:
+          transform 0.4s cubic-bezier(0.3, 1.6, 0.5, 1),
+          box-shadow 0.3s;
+      }
+
+      .seccion:hover .seccion-icono {
+        transform: rotate(-8deg) scale(1.06);
+      }
+
+      .seccion.usuarios .seccion-icono {
+        background: linear-gradient(135deg, #818cf8, #4f46e5);
+        box-shadow: 0 8px 20px -6px rgba(79, 70, 229, 0.7);
+      }
+
+      .seccion.mascotas .seccion-icono {
+        background: linear-gradient(135deg, #2dd4bf, #0d9488);
+        box-shadow: 0 8px 20px -6px rgba(13, 148, 136, 0.7);
+      }
+
+      .seccion h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .seccion-subtitulo {
+        margin: 2px 0 0;
+        font-size: 14px;
+        color: var(--texto-suave);
+      }
+
+      .seccion-cuerpo {
+        padding: 28px;
+      }
+
+      .acciones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      /* =========================================================
+           BOTONES
+           ========================================================= */
+      button {
+        position: relative;
+        overflow: hidden;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: linear-gradient(135deg, var(--primario), var(--primario-2));
+        box-shadow: 0 4px 14px -4px rgba(99, 102, 241, 0.6);
+        transition:
+          transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+          box-shadow 0.25s,
+          background 0.25s,
+          border-color 0.25s;
+      }
+
+      /* destello que cruza el botón */
+      button::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -80%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(
+          100deg,
+          transparent,
+          rgba(255, 255, 255, 0.35),
+          transparent
+        );
+        transform: skewX(-20deg);
+        transition: left 0.6s ease;
+        pointer-events: none;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px -6px rgba(99, 102, 241, 0.8);
+      }
+      button:hover::after {
+        left: 130%;
+      }
+      button:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      a:focus-visible {
+        outline: 3px solid var(--resplandor);
+        outline-offset: 2px;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .mascotas button {
+        background: linear-gradient(135deg, var(--mascota), var(--mascota-2));
+        box-shadow: 0 4px 14px -4px rgba(20, 184, 166, 0.6);
+      }
+
+      .mascotas button:hover {
+        box-shadow: 0 10px 24px -6px rgba(20, 184, 166, 0.8);
+      }
+
+      button.secundario {
+        background: var(--vidrio-interno);
+        color: var(--texto);
+        border-color: var(--linea);
+        box-shadow: var(--sombra-sm);
+      }
+
+      button.secundario:hover {
+        border-color: var(--acento);
+        box-shadow:
+          0 0 0 4px var(--brillo),
+          var(--sombra-sm);
+      }
+
+      button.secundario::after {
+        display: none;
+      }
+
+      button.cancelar {
+        background: transparent;
+        color: var(--texto-suave);
+        box-shadow: none;
+      }
+
+      button.cancelar:hover {
+        background: var(--primario-claro);
+        color: var(--texto);
+        box-shadow: none;
+      }
+      button.cancelar::after {
+        display: none;
+      }
+
+      button.eliminar {
+        background: var(--peligro-claro);
+        color: var(--error-texto);
+        box-shadow: none;
+      }
+
+      button.eliminar:hover {
+        background: var(--peligro);
+        color: #fff;
+        box-shadow: 0 8px 20px -6px rgba(244, 63, 94, 0.7);
+      }
+      button.eliminar::after {
+        display: none;
+      }
+
+      button.pequeno {
+        padding: 7px 12px;
+        font-size: 13px;
+        border-radius: 8px;
+      }
+
+      /* =========================================================
+           FORMULARIOS
+           ========================================================= */
+      .formulario {
+        display: none;
+        margin-bottom: 28px;
+        padding: 24px;
+        border-radius: var(--radio);
+        background: var(--formulario);
+        border: 1px solid var(--linea);
+        animation: aparecer 0.35s ease;
+      }
+
+      .mascotas .formulario {
+        background: var(--formulario-m);
+      }
+
+      .formulario h3 {
+        margin: 0 0 4px;
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .campos {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px 20px;
+        margin-top: 18px;
+      }
+
+      .campo {
+        min-width: 0;
+      }
+      .campo.completo {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        display: block;
+        margin: 0 0 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--etiqueta);
+      }
+
+      input,
+      select {
+        display: block;
+        width: 100%;
+        padding: 11px 14px;
+        font-family: inherit;
+        font-size: 15px;
+        color: var(--texto);
+        background: var(--campo);
+        border: 1px solid var(--campo-borde);
+        border-radius: 10px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+      }
+
+      input:hover,
+      select:hover {
+        border-color: var(--campo-borde-hover);
+      }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--acento);
+        box-shadow: 0 0 0 4px var(--brillo);
+      }
+
+      input[type="file"] {
+        padding: 10px;
+        cursor: pointer;
+        border-style: dashed;
+        border-width: 2px;
+      }
+
+      input[type="file"]::file-selector-button {
+        margin-right: 12px;
+        padding: 7px 14px;
+        border: none;
+        border-radius: 8px;
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        color: var(--acento-texto);
+        background: var(--primario-claro);
+      }
+
+      .mascotas input[type="file"]::file-selector-button {
+        color: var(--mascota);
+        background: var(--mascota-claro);
+      }
+
+      .ayuda {
+        margin: 6px 0 0;
+        font-size: 12.5px;
+        color: var(--texto-suave);
+      }
+
+      .vista-previa {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .vista-previa img {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 2px solid var(--vidrio-interno);
+        box-shadow: var(--sombra-sm);
+        animation: aparecer 0.3s ease both;
+      }
+
+      /* Fotografías actuales de la mascota (con opción de quitarlas) */
+      .actuales {
+        margin-bottom: 18px;
+      }
+
+      .actuales-titulo {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--etiqueta);
+      }
+
+      .galeria-actual {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+
+      .foto-actual {
+        position: relative;
+        width: 88px;
+        height: 88px;
+      }
+
+      .foto-actual img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 2px solid var(--vidrio-interno);
+        box-shadow: var(--sombra-sm);
+        transition:
+          opacity 0.25s,
+          filter 0.25s,
+          border-color 0.25s;
+      }
+
+      .foto-actual.marcada img {
+        opacity: 0.4;
+        filter: grayscale(1);
+        border-color: var(--peligro);
+      }
+
+      .aviso-quitar {
+        display: none;
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        bottom: 6px;
+        padding: 2px 0;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--peligro);
+        pointer-events: none;
+      }
+
+      .foto-actual.marcada .aviso-quitar {
+        display: block;
+      }
+
+      .mascotas button.quitar-foto {
+        position: absolute;
+        top: -9px;
+        right: -9px;
+        z-index: 2;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: var(--peligro);
+        border: 2px solid #fff;
+        box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.45);
+      }
+
+      .mascotas button.quitar-foto::after {
+        display: none;
+      }
+      .mascotas button.quitar-foto:hover {
+        transform: scale(1.12);
+        box-shadow: 0 6px 14px -2px rgba(0, 0, 0, 0.55);
+      }
+      .mascotas button.quitar-foto.deshacer {
+        background: var(--mascota-oscuro);
+      }
+
+      .botones-formulario {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 22px;
+        padding-top: 20px;
+        border-top: 1px solid var(--linea);
+      }
+
+      /* =========================================================
+           MENSAJES
+           ========================================================= */
+      .mensaje {
+        display: none;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: pre-wrap;
+        animation: aparecer 0.3s ease;
+      }
+
+      .mensaje.ok {
+        display: flex;
+        color: var(--exito-texto);
+        background: var(--exito-claro);
+        border: 1px solid var(--exito-borde);
+      }
+      .mensaje.error {
+        display: flex;
+        color: var(--error-texto);
+        background: var(--peligro-claro);
+        border: 1px solid var(--error-borde);
+      }
+      .mensaje.info {
+        display: flex;
+        color: var(--info-texto);
+        background: var(--primario-claro);
+        border: 1px solid var(--info-borde);
+      }
+
+      /* =========================================================
+           ESTADO DE LA LISTA
+           ========================================================= */
+      .estado-lista {
+        display: none;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .estado-lista.visible {
+        display: flex;
+      }
+
+      .estado-lista p {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--etiqueta);
+      }
+
+      .insignia-nueva {
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: var(--exito-texto);
+        background: var(--exito-claro);
+        border: 1px solid var(--exito-borde);
+        animation: latido 2.2s ease-in-out infinite;
+      }
+
+      /* =========================================================
+           TARJETAS
+           ========================================================= */
+      .lista {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 22px;
+      }
+
+      .lista:empty {
+        display: none;
+      }
+
+      .tarjeta {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--linea);
+        border-radius: var(--radio);
+        background: var(--vidrio-interno);
+        overflow: hidden;
+        overflow-wrap: anywhere;
+        box-shadow: var(--sombra-sm);
+        transition:
+          transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+          box-shadow 0.35s,
+          border-color 0.35s;
+        animation: entrar 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      .tarjeta:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .tarjeta:nth-child(2) {
+        animation-delay: 0.07s;
+      }
+      .tarjeta:nth-child(3) {
+        animation-delay: 0.14s;
+      }
+      .tarjeta:nth-child(4) {
+        animation-delay: 0.21s;
+      }
+      .tarjeta:nth-child(5) {
+        animation-delay: 0.28s;
+      }
+      .tarjeta:nth-child(6) {
+        animation-delay: 0.35s;
+      }
+      .tarjeta:nth-child(n + 7) {
+        animation-delay: 0.4s;
+      }
+
+      .tarjeta:hover {
+        transform: translateY(-10px) scale(1.015);
+        border-color: var(--acento);
+        box-shadow:
+          0 0 0 1px var(--acento),
+          0 28px 50px -14px var(--resplandor),
+          0 0 50px -10px var(--resplandor);
+        z-index: 2;
+      }
+
+      .tarjeta.destacada {
+        border-color: var(--exito-borde);
+        box-shadow:
+          0 0 0 3px var(--exito-claro),
+          var(--sombra-md);
+      }
+
+      .tarjeta-cuerpo {
+        position: relative;
+        padding: 20px;
+        flex: 1;
+      }
+
+      .tarjeta h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        text-transform: capitalize;
+      }
+
+      .tarjeta-pie {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px 20px;
+        background: var(--pie-tarjeta);
+        border-top: 1px solid var(--linea);
+      }
+
+      /* Usuario */
+      .perfil {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .avatar {
+        width: 72px;
+        height: 72px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--vidrio-interno);
+        box-shadow:
+          0 0 0 2px var(--acento),
+          var(--sombra-sm);
+        transition:
+          transform 0.4s cubic-bezier(0.3, 1.6, 0.5, 1),
+          box-shadow 0.3s;
+      }
+
+      .tarjeta:hover .avatar {
+        transform: scale(1.1) rotate(-4deg);
+        box-shadow:
+          0 0 0 2px var(--acento),
+          0 0 24px 2px var(--resplandor);
+      }
+
+      .avatar-inicial {
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+      }
+
+      .usuario-nombre {
+        margin-top: 2px;
+        font-size: 14px;
+        color: var(--acento-texto);
+        font-weight: 600;
+      }
+
+      .datos {
+        margin: 16px 0 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 8px;
+      }
+
+      .datos li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 14px;
+      }
+      .datos li span:first-child {
+        color: var(--texto-suave);
+      }
+      .datos li span:last-child {
+        font-weight: 600;
+        text-align: right;
+      }
+
+      /* Mascota */
+      .portada {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        background: linear-gradient(
+          135deg,
+          rgba(45, 212, 191, 0.3),
+          rgba(129, 140, 248, 0.3)
+        );
+        overflow: hidden;
+      }
+
+      .portada img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .tarjeta:hover .portada img {
+        transform: scale(1.08);
+      }
+
+      .portada::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          180deg,
+          transparent 55%,
+          rgba(2, 6, 23, 0.35)
+        );
+      }
+
+      .portada-vacia {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #5eead4;
+      }
+
+      .portada .id-chip {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 2;
+      }
+
+      .id-chip {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #0f172a;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: var(--sombra-sm);
+      }
+
+      .miniaturas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .mascotas button.miniatura {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border-radius: 10px;
+        overflow: hidden;
+        background: none;
+        border: 2px solid transparent;
+        box-shadow: none;
+        opacity: 0.6;
+      }
+
+      .mascotas button.miniatura::after {
+        display: none;
+      }
+      .mascotas button.miniatura:hover {
+        opacity: 1;
+        box-shadow: 0 6px 14px -4px var(--resplandor);
+      }
+      .mascotas button.miniatura.activa {
+        border-color: var(--mascota);
+        opacity: 1;
+      }
+      .miniatura img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .etiquetas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .etiqueta {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--neutra-fondo);
+        color: var(--neutra-texto);
+      }
+
+      .etiqueta.macho {
+        background: var(--macho-fondo);
+        color: var(--macho-texto);
+      }
+      .etiqueta.hembra {
+        background: var(--hembra-fondo);
+        color: var(--hembra-texto);
+      }
+
+      /* Pista inicial: solo se ve mientras la lista está sin desplegar */
+      .pista {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        padding: 6px 2px;
+        font-size: 14px;
+        color: var(--texto-suave);
+      }
+
+      .lista:empty ~ .pista {
+        display: flex;
+      }
+
+      .vacio {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 40px 20px;
+        border: 2px dashed var(--linea);
+        border-radius: var(--radio);
+        color: var(--texto-suave);
+      }
+
+      .vacio svg {
+        margin-bottom: 12px;
+        opacity: 0.6;
+      }
+      .vacio strong {
+        color: var(--texto);
+        font-size: 16px;
+      }
+      .vacio span {
+        margin-top: 4px;
+        font-size: 14px;
+      }
+
+      /* =========================================================
+           DIÁLOGO
+           ========================================================= */
+      dialog {
+        border: 1px solid var(--linea);
+        border-radius: 20px;
+        padding: 28px;
+        width: min(400px, calc(100% - 32px));
+        background: var(--dialogo);
+        box-shadow: var(--sombra-lg);
+        color: var(--texto);
+        animation: aparecer 0.25s ease;
+      }
+
+      dialog::backdrop {
+        background: rgba(2, 8, 24, 0.6);
+        backdrop-filter: blur(4px);
+      }
+
+      .dialogo-icono {
+        width: 52px;
+        height: 52px;
+        margin-bottom: 16px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: var(--error-texto);
+        background: var(--peligro-claro);
+      }
+
+      dialog h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+      dialog p {
+        margin: 0 0 22px;
+        color: var(--texto-suave);
+        font-size: 14px;
+      }
+      dialog .botones-formulario {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        justify-content: flex-end;
+      }
+      dialog button.peligro {
+        background: var(--peligro);
+        box-shadow: 0 4px 14px -4px rgba(244, 63, 94, 0.6);
+      }
+      dialog button.peligro:hover {
+        background: #e11d48;
+        box-shadow: 0 10px 24px -6px rgba(244, 63, 94, 0.8);
+      }
+
+      footer {
+        text-align: center;
+        padding: 8px 20px 40px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--hero-sub);
+        position: relative;
+        z-index: 1;
+      }
+
+      :root[data-theme="dark"] footer {
+        color: var(--texto-suave);
+      }
+
+      /* =========================================================
+           ANIMACIONES
+           ========================================================= */
+      @keyframes aparecer {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes entrar {
+        from {
+          opacity: 0;
+          transform: translateY(24px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes girar {
+        to {
+          rotate: 360deg;
+        }
+      }
+      @keyframes flotar {
+        0%,
+        100% {
+          transform: translateY(-6px);
+        }
+        50% {
+          transform: translateY(8px);
+        }
+      }
+      @keyframes pulso {
+        0%,
+        100% {
+          opacity: 0.75;
+          scale: 1;
+        }
+        50% {
+          opacity: 1;
+          scale: 1.1;
+        }
+      }
+      @keyframes latido {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+        }
+        50% {
+          box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+        }
+      }
+      @keyframes titilar {
+        0%,
+        100% {
+          opacity: 0.15;
+          scale: 0.6;
+        }
+        50% {
+          opacity: 1;
+          scale: 1.1;
+        }
+      }
+      @keyframes derivar {
+        from {
+          transform: translateX(0);
+        }
+        to {
+          transform: translateX(calc(100vw + 1100px));
+        }
+      }
+      @keyframes fugaz {
+        0% {
+          opacity: 0;
+          translate: 0 0;
+        }
+        12% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          translate: -420px 290px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      /* =========================================================
+           ADAPTACIÓN A PANTALLAS PEQUEÑAS
+           ========================================================= */
+      @media (max-width: 900px) {
+        .hero {
+          padding-top: 70px;
+          text-align: center;
+        }
+        .hero h1,
+        .hero p {
+          margin-left: auto;
+          margin-right: auto;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .navegacion,
+        .tema-texto {
+          display: none;
+        }
+        button.tema-btn {
+          padding: 9px;
+        }
+        .hero {
+          padding-bottom: 28px;
+        }
         .resumen {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
+          grid-template-columns: 1fr;
+          gap: 14px;
         }
-
-        .estadistica {
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 2px 8px #00000010;
+        .campos {
+          grid-template-columns: 1fr;
         }
-
-        .estadistica strong {
-            display: block;
-            font-size: 32px;
-            color: #2563eb;
-            margin-bottom: 8px;
+        .seccion-cabecera,
+        .seccion-cuerpo {
+          padding: 20px;
         }
-
-        .seccion {
-            background: white;
-            padding: 25px;
-            margin-bottom: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px #00000012;
-        }
-
-        .acciones {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        button {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            background: #2563eb;
-            color: white;
-            font-size: 14px;
-        }
-
-        button:hover {
-            filter: brightness(0.92);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .secundario {
-            background: #475569;
-        }
-
-        .eliminar {
-            background: #dc2626;
-        }
-
-        .cancelar {
-            background: #64748b;
-        }
-
         .formulario {
-            display: none;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+          padding: 18px;
         }
-
-        label {
-            display: block;
-            font-weight: bold;
-            margin: 12px 0 5px;
-        }
-
-        input, select {
-            display: block;
-            width: 100%;
-            padding: 11px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 15px;
-            background: white;
-        }
-
-        input[type="file"] {
-            padding: 8px;
-        }
-
-        .ayuda {
-            font-size: 13px;
-            color: #64748b;
-            margin: 8px 0;
-        }
-
-        .botones-formulario {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 18px;
-        }
-
-        .mensaje {
-            margin: 12px 0;
-            font-weight: bold;
-            white-space: pre-wrap;
-        }
-
-        .mensaje.ok {
-            color: #15803d;
-        }
-
-        .mensaje.error {
-            color: #b91c1c;
-        }
-
-        .lista {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 16px;
-        }
-
-        .tarjeta {
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 16px;
-            background: #fff;
-            overflow-wrap: anywhere;
-        }
-
-        .tarjeta h3 {
-            margin: 10px 0;
-        }
-
-        .tarjeta p {
-            margin: 6px 0;
-        }
-
-        .foto {
-            width: 110px;
-            height: 110px;
-            object-fit: cover;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .galeria {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 12px 0;
-        }
-
-        .galeria .foto {
-            width: 85px;
-            height: 85px;
-        }
-
-        .botones-tarjeta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 15px;
-        }
-
-        .vacio {
-            color: #64748b;
-            padding: 15px;
-        }
-
-        @media (max-width: 550px) {
-            .resumen {
-                grid-template-columns: 1fr;
-            }
-
-            .seccion {
-                padding: 16px;
-            }
-        }
+      }
     </style>
-</head>
+  </head>
 
-<body>
-<div class="contenedor">
-
-    <header>
-        <h1>Bienvenido al sistema de gestión</h1>
-        <p>Administración de usuarios y mascotas</p>
-    </header>
-
-    <div class="resumen">
-        <div class="estadistica">
-            <strong id="totalUsuarios">0</strong>
-            Usuarios registrados
-        </div>
-
-        <div class="estadistica">
-            <strong id="totalMascotas">0</strong>
-            Mascotas registradas
-        </div>
+  <body>
+    <!-- Fondo de video -->
+    <div id="fondo" aria-hidden="true">
+      <video
+        class="video-fondo"
+        id="videoFondo"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        poster="/video/fondo-medusas.jpg"
+        disablepictureinpicture
+        tabindex="-1"
+      >
+        <source src="/video/fondo-medusas.mp4" type="video/mp4" />
+      </video>
+      <div class="velo-video"></div>
     </div>
 
-    <!-- GESTIÓN DE USUARIOS -->
-    <section class="seccion">
+    <!-- Barra superior -->
+    <nav class="barra">
+      <div class="barra-interna">
+        <div class="marca">
+          <span class="marca-icono" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="5.5" cy="10" r="2.3" />
+              <circle cx="9.5" cy="5.5" r="2.3" />
+              <circle cx="14.5" cy="5.5" r="2.3" />
+              <circle cx="18.5" cy="10" r="2.3" />
+              <path
+                d="M12 11c-3 0-6 3.2-6 6 0 1.9 1.5 3 3.2 3 1 0 1.8-.5 2.8-.5s1.8.5 2.8.5c1.7 0 3.2-1.1 3.2-3 0-2.8-3-6-6-6z"
+              />
+            </svg>
+          </span>
+          Gestión de Mascotas
+        </div>
+        <div class="barra-derecha">
+          <div class="navegacion">
+            <a href="#usuarios">Usuarios</a>
+            <a href="#mascotas">Mascotas</a>
+          </div>
+          <button
+            type="button"
+            id="botonTema"
+            class="tema-btn"
+            aria-label="Cambiar entre modo claro y oscuro"
+          >
+            <span class="tema-iconos" aria-hidden="true">
+              <svg
+                class="icono-sol"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="4.2" fill="currentColor" />
+                <path
+                  d="M12 2.5v2.2M12 19.3v2.2M4.4 4.4l1.6 1.6M18 18l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.4 19.6 6 18M18 6l1.6-1.6"
+                />
+              </svg>
+              <svg class="icono-luna" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+              </svg>
+            </span>
+            <span class="tema-texto" id="textoTema">Modo claro</span>
+          </button>
+        </div>
+      </div>
+    </nav>
 
-        <h2>Gestión de Usuarios</h2>
+    <!-- Cabecera -->
+    <header class="hero">
+      <div class="hero-interno">
+        <span class="hero-etiqueta">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"
+            />
+          </svg>
+          Panel de administración
+        </span>
+        <h1>Bienvenido al sistema de gestión</h1>
+        <p>Administración de usuarios y mascotas</p>
+      </div>
+    </header>
 
-        <div class="acciones">
-            <button type="button" onclick="nuevoUsuario()">
-                Agregar Usuario
-            </button>
-
-            <button type="button" class="secundario"
-                    onclick="cargarUsuarios()">
-                Ver Usuarios
-            </button>
+    <div class="contenedor">
+      <div class="resumen">
+        <div class="estadistica usuarios">
+          <div class="estadistica-icono" aria-hidden="true">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+              <circle cx="10" cy="7" r="4" />
+              <path d="M21 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <div>
+            <strong id="totalUsuarios">0</strong>
+            <span>Usuarios registrados</span>
+          </div>
         </div>
 
-        <form id="formUsuario" class="formulario">
+        <div class="estadistica mascotas">
+          <div class="estadistica-icono" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="5.5" cy="10" r="2.3" />
+              <circle cx="9.5" cy="5.5" r="2.3" />
+              <circle cx="14.5" cy="5.5" r="2.3" />
+              <circle cx="18.5" cy="10" r="2.3" />
+              <path
+                d="M12 11c-3 0-6 3.2-6 6 0 1.9 1.5 3 3.2 3 1 0 1.8-.5 2.8-.5s1.8.5 2.8.5c1.7 0 3.2-1.1 3.2-3 0-2.8-3-6-6-6z"
+              />
+            </svg>
+          </div>
+          <div>
+            <strong id="totalMascotas">0</strong>
+            <span>Mascotas registradas</span>
+          </div>
+        </div>
+      </div>
 
+      <!-- GESTIÓN DE USUARIOS -->
+      <section class="seccion usuarios" id="usuarios">
+        <div class="seccion-cabecera">
+          <div class="seccion-titulo">
+            <div class="seccion-icono" aria-hidden="true">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <div>
+              <h2>Gestión de Usuarios</h2>
+              <p class="seccion-subtitulo">
+                Registra, consulta, edita y elimina usuarios
+              </p>
+            </div>
+          </div>
+
+          <div class="acciones">
+            <button type="button" onclick="nuevoUsuario()">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Agregar Usuario
+            </button>
+
+            <button type="button" class="secundario" onclick="cargarUsuarios()">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+              </svg>
+              Ver Usuarios
+            </button>
+          </div>
+        </div>
+
+        <div class="seccion-cuerpo">
+          <form id="formUsuario" class="formulario">
             <h3 id="tituloUsuario">Registrar usuario</h3>
 
-            <input type="hidden" id="idUsuario">
+            <input type="hidden" id="idUsuario" />
 
-            <label for="firstname">Nombre</label>
-            <input type="text" id="firstname"
-                   name="firstname" required>
+            <div class="campos">
+              <div class="campo">
+                <label for="firstname">Nombre</label>
+                <input type="text" id="firstname" name="firstname" required />
+              </div>
 
-            <label for="lastname">Apellido</label>
-            <input type="text" id="lastname"
-                   name="lastname" required>
+              <div class="campo">
+                <label for="lastname">Apellido</label>
+                <input type="text" id="lastname" name="lastname" required />
+              </div>
 
-            <label for="username">Nombre de usuario</label>
-            <input type="text" id="username"
-                   name="username" required>
+              <div class="campo">
+                <label for="username">Nombre de usuario</label>
+                <input type="text" id="username" name="username" required />
+              </div>
 
-            <label for="password">Contraseña</label>
-            <input type="password" id="password"
-                   name="password">
+              <div class="campo">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" />
+                <p id="ayudaPassword" class="ayuda">
+                  La contraseña es obligatoria al crear un usuario.
+                </p>
+              </div>
 
-            <p id="ayudaPassword" class="ayuda">
-                La contraseña es obligatoria al crear un usuario.
-            </p>
-
-            <label for="avatar">Fotografía de usuario</label>
-            <input type="file" id="avatar"
-                   name="avatar"
-                   accept="image/jpeg,image/png,image/webp">
-
-            <p class="ayuda">
-                Formatos JPG, PNG o WEBP. Máximo 5 MB.
-            </p>
+              <div class="campo completo">
+                <label for="avatar">Fotografía de usuario</label>
+                <input
+                  type="file"
+                  id="avatar"
+                  name="avatar"
+                  accept="image/jpeg,image/png,image/webp"
+                />
+                <p class="ayuda">Formatos JPG, PNG o WEBP. Máximo 5 MB.</p>
+                <div id="previewAvatar" class="vista-previa"></div>
+              </div>
+            </div>
 
             <div class="botones-formulario">
-                <button type="submit" id="guardarUsuario">
-                    Guardar Usuario
-                </button>
-
-                <button type="button" class="cancelar"
-                        onclick="cerrarUsuario()">
-                    Cancelar
-                </button>
+              <button type="submit" id="guardarUsuario">Guardar Usuario</button>
+              <button type="button" class="cancelar" onclick="cerrarUsuario()">
+                Cancelar
+              </button>
             </div>
-        </form>
+          </form>
 
-        <div id="mensajeUsuario" class="mensaje"
-             role="status"></div>
+          <div id="mensajeUsuario" class="mensaje" role="status"></div>
 
-        <div id="listaUsuarios" class="lista"></div>
-    </section>
+          <div id="estadoUsuarios" class="estado-lista"></div>
 
-    <!-- GESTIÓN DE MASCOTAS -->
-    <section class="seccion">
+          <div id="listaUsuarios" class="lista"></div>
+          <p class="pista">
+            Pulsa «Ver Usuarios» para consultar todos los usuarios guardados.
+          </p>
+        </div>
+      </section>
 
-        <h2>Gestión de Mascotas</h2>
+      <!-- GESTIÓN DE MASCOTAS -->
+      <section class="seccion mascotas" id="mascotas">
+        <div class="seccion-cabecera">
+          <div class="seccion-titulo">
+            <div class="seccion-icono" aria-hidden="true">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <circle cx="5.5" cy="10" r="2.3" />
+                <circle cx="9.5" cy="5.5" r="2.3" />
+                <circle cx="14.5" cy="5.5" r="2.3" />
+                <circle cx="18.5" cy="10" r="2.3" />
+                <path
+                  d="M12 11c-3 0-6 3.2-6 6 0 1.9 1.5 3 3.2 3 1 0 1.8-.5 2.8-.5s1.8.5 2.8.5c1.7 0 3.2-1.1 3.2-3 0-2.8-3-6-6-6z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2>Gestión de Mascotas</h2>
+              <p class="seccion-subtitulo">
+                Registra mascotas con hasta 5 fotografías
+              </p>
+            </div>
+          </div>
 
-        <div class="acciones">
+          <div class="acciones">
             <button type="button" onclick="nuevaMascota()">
-                Agregar Mascota
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Agregar Mascota
             </button>
 
-            <button type="button" class="secundario"
-                    onclick="cargarMascotas()">
-                Ver Mascotas
+            <button type="button" class="secundario" onclick="cargarMascotas()">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+              </svg>
+              Ver Mascotas
             </button>
+          </div>
         </div>
 
-        <form id="formMascota" class="formulario">
-
+        <div class="seccion-cuerpo">
+          <form id="formMascota" class="formulario">
             <h3 id="tituloMascota">Registrar mascota</h3>
 
-            <input type="hidden" id="idMascota">
+            <input type="hidden" id="idMascota" />
 
-            <label for="especie">Especie</label>
-            <input type="text" id="especie"
-                   name="especie" required>
+            <div class="campos">
+              <div class="campo">
+                <label for="especie">Especie</label>
+                <input type="text" id="especie" name="especie" required />
+              </div>
 
-            <label for="color">Color</label>
-            <input type="text" id="color"
-                   name="color" required>
+              <div class="campo">
+                <label for="color">Color</label>
+                <input type="text" id="color" name="color" required />
+              </div>
 
-            <label for="edad">Edad</label>
-            <input type="number" id="edad"
-                   name="edad" min="0" step="1" required>
+              <div class="campo">
+                <label for="edad">Edad</label>
+                <input
+                  type="number"
+                  id="edad"
+                  name="edad"
+                  min="0"
+                  step="1"
+                  required
+                />
+              </div>
 
-            <label for="sexo">Sexo</label>
-            <select id="sexo" name="sexo" required>
-                <option value="">Seleccione</option>
-                <option value="macho">Macho</option>
-                <option value="hembra">Hembra</option>
-            </select>
+              <div class="campo">
+                <label for="sexo">Sexo</label>
+                <select id="sexo" name="sexo" required>
+                  <option value="">Seleccione</option>
+                  <option value="macho">Macho</option>
+                  <option value="hembra">Hembra</option>
+                </select>
+              </div>
 
-            <label for="img">Fotografías</label>
-            <input type="file" id="img"
-                   name="img"
-                   accept="image/jpeg,image/png,image/webp"
-                   multiple>
+              <div class="campo completo">
+                <div id="imagenesActuales" class="actuales" hidden>
+                  <p class="actuales-titulo">Fotografías actuales</p>
+                  <div id="galeriaActuales" class="galeria-actual"></div>
+                </div>
 
-            <p id="ayudaImagenes" class="ayuda">
-                Máximo 5 imágenes por mascota, 5 MB cada una.
-            </p>
+                <label for="img">Fotografías</label>
+                <input
+                  type="file"
+                  id="img"
+                  name="img"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                />
+                <p id="ayudaImagenes" class="ayuda">
+                  Máximo 5 imágenes por mascota, 5 MB cada una.
+                </p>
+                <div id="previewMascota" class="vista-previa"></div>
+              </div>
+            </div>
 
             <div class="botones-formulario">
-                <button type="submit" id="guardarMascota">
-                    Guardar Mascota
-                </button>
-
-                <button type="button" class="cancelar"
-                        onclick="cerrarMascota()">
-                    Cancelar
-                </button>
+              <button type="submit" id="guardarMascota">Guardar Mascota</button>
+              <button type="button" class="cancelar" onclick="cerrarMascota()">
+                Cancelar
+              </button>
             </div>
-        </form>
+          </form>
 
-        <div id="mensajeMascota" class="mensaje"
-             role="status"></div>
+          <div id="mensajeMascota" class="mensaje" role="status"></div>
 
-        <div id="listaMascotas" class="lista"></div>
-    </section>
+          <div id="estadoMascotas" class="estado-lista"></div>
 
-</div>
+          <div id="listaMascotas" class="lista"></div>
+          <p class="pista">
+            Pulsa «Ver Mascotas» para consultar todas las mascotas guardadas.
+          </p>
+        </div>
+      </section>
+    </div>
 
-<script>
-    const API_USERS = '/api/users';
-    const API_PETS = '/api/pets';
+    <footer>
+      Sistema de gestión de usuarios y mascotas · API REST con Node.js y Express
+    </footer>
 
-    let usuariosActuales = [];
-    let mascotasActuales = [];
+    <!-- Confirmación de eliminación -->
+    <dialog id="dialogoConfirmar">
+      <form method="dialog">
+        <div class="dialogo-icono" aria-hidden="true">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 6h18" />
+            <path d="M8 6V4h8v2" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
+          </svg>
+        </div>
+        <h3>Confirmar eliminación</h3>
+        <p id="textoConfirmar"></p>
+        <div class="botones-formulario">
+          <button type="submit" value="no" class="secundario">Cancelar</button>
+          <button type="submit" value="si" class="peligro">Sí, eliminar</button>
+        </div>
+      </form>
+    </dialog>
 
-    const obtener = id => document.getElementById(id);
+    <script>
+      const API_USERS = "/api/users";
+      const API_PETS = "/api/pets";
 
-    function mensaje(id, texto, esError = false) {
+      let usuariosActuales = [];
+      let mascotasActuales = [];
+
+      const obtener = (id) => document.getElementById(id);
+
+      const ICONOS = {
+        ok: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+        error:
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
+        info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+        usuarios:
+          '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+        mascotas:
+          '<svg width="44" height="44" viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="10" r="2.3"/><circle cx="9.5" cy="5.5" r="2.3"/><circle cx="14.5" cy="5.5" r="2.3"/><circle cx="18.5" cy="10" r="2.3"/><path d="M12 11c-3 0-6 3.2-6 6 0 1.9 1.5 3 3.2 3 1 0 1.8-.5 2.8-.5s1.8.5 2.8.5c1.7 0 3.2-1.1 3.2-3 0-2.8-3-6-6-6z"/></svg>',
+        patita:
+          '<svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="10" r="2.3"/><circle cx="9.5" cy="5.5" r="2.3"/><circle cx="14.5" cy="5.5" r="2.3"/><circle cx="18.5" cy="10" r="2.3"/><path d="M12 11c-3 0-6 3.2-6 6 0 1.9 1.5 3 3.2 3 1 0 1.8-.5 2.8-.5s1.8.5 2.8.5c1.7 0 3.2-1.1 3.2-3 0-2.8-3-6-6-6z"/></svg>',
+      };
+
+      // Los iconos son SVG estáticos definidos arriba, nunca datos del usuario
+      function conIcono(elemento, icono) {
+        const contenedor = document.createElement("span");
+        contenedor.innerHTML = icono;
+        elemento.prepend(contenedor.firstChild);
+      }
+
+      function mensaje(id, texto, esError = false) {
         const elemento = obtener(id);
-        elemento.textContent = texto;
-        elemento.className = esError
-            ? 'mensaje error'
-            : 'mensaje ok';
-    }
+        elemento.replaceChildren();
 
-    // Consultas y peticiones a Express
-    async function solicitar(url, opciones = {}) {
+        if (!texto) {
+          elemento.className = "mensaje";
+          return;
+        }
+
+        const tipo = esError ? "error" : "ok";
+        elemento.className = "mensaje " + tipo;
+        elemento.textContent = texto;
+        conIcono(elemento, ICONOS[tipo]);
+      }
+
+      // Consultas y peticiones a Express
+      async function solicitar(url, opciones = {}) {
         const respuesta = await fetch(url, opciones);
         const datos = await respuesta.json();
 
         if (!respuesta.ok) {
-            throw new Error(
-                datos.error || 'Error al realizar la operación'
-            );
+          throw new Error(datos.error || "Error al realizar la operación");
         }
 
         return datos;
-    }
+      }
 
-    // Crear elementos de texto de forma segura
-    function textoElemento(etiqueta, contenido) {
+      // Crear elementos de texto de forma segura
+      function textoElemento(etiqueta, contenido, clase) {
         const elemento = document.createElement(etiqueta);
         elemento.textContent = contenido;
+        if (clase) elemento.className = clase;
         return elemento;
-    }
+      }
 
-    function crearBoton(etiqueta, clase, accion) {
-        const boton = document.createElement('button');
-        boton.type = 'button';
+      function crearBoton(etiqueta, clase, accion) {
+        const boton = document.createElement("button");
+        boton.type = "button";
         boton.textContent = etiqueta;
-        boton.className = clase;
-        boton.addEventListener('click', accion);
+        boton.className = clase + " pequeno";
+        boton.addEventListener("click", accion);
         return boton;
-    }
+      }
 
-    // Crear fotografías sin insertar HTML dinámico
-    function crearImagen(ruta, descripcion) {
-        const imagen = document.createElement('img');
-        imagen.className = 'foto';
+      // Solo se aceptan rutas internas /img/...
+      function rutaSegura(ruta) {
+        return (
+          typeof ruta === "string" &&
+          ruta.startsWith("/img/") &&
+          !ruta.startsWith("//")
+        );
+      }
+
+      function crearImagen(ruta, descripcion, clase) {
+        const imagen = document.createElement("img");
+        imagen.className = clase;
         imagen.alt = descripcion;
-        imagen.loading = 'lazy';
+        imagen.loading = "lazy";
 
-        if (
-            typeof ruta === 'string' &&
-            ruta.startsWith('/img/') &&
-            !ruta.startsWith('//')
-        ) {
-            imagen.src = ruta;
+        if (rutaSegura(ruta)) {
+          imagen.src = ruta;
         }
 
         return imagen;
-    }
+      }
 
-    // =============================
-    // USUARIOS
-    // =============================
+      function crearFila(etiqueta, valor) {
+        const fila = document.createElement("li");
+        fila.appendChild(textoElemento("span", etiqueta));
+        fila.appendChild(textoElemento("span", String(valor)));
+        return fila;
+      }
 
-    function cerrarUsuario() {
-        obtener('formUsuario').style.display = 'none';
-        obtener('formUsuario').reset();
-        obtener('idUsuario').value = '';
-    }
+      function estadoVacio(tipo, titulo, detalle) {
+        const caja = document.createElement("div");
+        caja.className = "vacio";
+        const icono = document.createElement("span");
+        icono.innerHTML = ICONOS[tipo];
+        caja.appendChild(icono.firstChild);
+        caja.appendChild(textoElemento("strong", titulo));
+        caja.appendChild(textoElemento("span", detalle));
+        return caja;
+      }
 
-    function nuevoUsuario() {
-        const formulario = obtener('formUsuario');
+      // Barra que indica si se muestra el último registro o toda la lista
+      function pintarEstado(
+        idContenedor,
+        modo,
+        cantidad,
+        singular,
+        plural,
+        accionVerTodos,
+      ) {
+        const barra = obtener(idContenedor);
+        barra.replaceChildren();
+
+        if (modo === "ninguno") {
+          barra.className = "estado-lista";
+          return;
+        }
+
+        barra.className = "estado-lista visible";
+
+        const texto = document.createElement("p");
+
+        if (modo === "reciente") {
+          const insignia = textoElemento(
+            "span",
+            "Recién guardado",
+            "insignia-nueva",
+          );
+
+          texto.appendChild(insignia);
+
+          setTimeout(() => {
+            insignia.remove();
+          }, 5000);
+          // texto.appendChild(
+          //     textoElemento('span', `Mostrando solo ${singular} que acabas de guardar`)
+          // );
+          barra.appendChild(texto);
+
+          const boton = crearBoton("Ver todos", "secundario", accionVerTodos);
+          barra.appendChild(boton);
+        } else {
+          texto.textContent = `${cantidad} ${cantidad === 1 ? singular.replace(/^(el|la) /, "") : plural} en total`;
+          barra.appendChild(texto);
+        }
+      }
+
+      function ocultarLista(idLista, idEstado) {
+        obtener(idLista).replaceChildren();
+        pintarEstado(idEstado, "ninguno");
+      }
+
+      // Vista previa de las imágenes elegidas en el formulario
+      function vistaPrevia(inputId, contenedorId) {
+        obtener(inputId).addEventListener("change", (evento) => {
+          const contenedor = obtener(contenedorId);
+          contenedor.replaceChildren();
+
+          Array.from(evento.target.files)
+            .slice(0, 5)
+            .forEach((archivo) => {
+              if (!archivo.type.startsWith("image/")) return;
+              const imagen = document.createElement("img");
+              imagen.alt = "Vista previa";
+              imagen.src = URL.createObjectURL(archivo);
+              imagen.onload = () => URL.revokeObjectURL(imagen.src);
+              contenedor.appendChild(imagen);
+            });
+        });
+      }
+
+      vistaPrevia("avatar", "previewAvatar");
+      vistaPrevia("img", "previewMascota");
+
+      function confirmarEliminar(texto) {
+        return new Promise((resolver) => {
+          const dialogo = obtener("dialogoConfirmar");
+          obtener("textoConfirmar").textContent = texto;
+
+          dialogo.addEventListener(
+            "close",
+            () => {
+              resolver(dialogo.returnValue === "si");
+            },
+            { once: true },
+          );
+
+          dialogo.returnValue = "no";
+          dialogo.showModal();
+        });
+      }
+
+      // =============================
+      // USUARIOS
+      // =============================
+
+      function cerrarUsuario() {
+        obtener("formUsuario").style.display = "none";
+        obtener("formUsuario").reset();
+        obtener("idUsuario").value = "";
+        obtener("previewAvatar").replaceChildren();
+      }
+
+      function nuevoUsuario() {
+        const formulario = obtener("formUsuario");
 
         formulario.reset();
-        obtener('idUsuario').value = '';
-        obtener('tituloUsuario').textContent =
-            'Registrar usuario';
+        obtener("previewAvatar").replaceChildren();
+        obtener("idUsuario").value = "";
+        obtener("tituloUsuario").textContent = "Registrar usuario";
 
-        obtener('password').required = true;
-        obtener('ayudaPassword').textContent =
-            'La contraseña es obligatoria al crear un usuario.';
+        obtener("password").required = true;
+        obtener("ayudaPassword").textContent =
+          "La contraseña es obligatoria al crear un usuario.";
 
-        obtener('guardarUsuario').textContent =
-            'Guardar Usuario';
+        obtener("guardarUsuario").textContent = "Guardar Usuario";
 
-        mensaje('mensajeUsuario', '');
-        formulario.style.display = 'block';
+        mensaje("mensajeUsuario", "");
+        formulario.style.display = "block";
         formulario.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
+          behavior: "smooth",
+          block: "center",
         });
-    }
+        obtener("firstname").focus({ preventScroll: true });
+      }
 
-    async function cargarUsuarios() {
-        const lista = obtener('listaUsuarios');
-        lista.replaceChildren();
+      function tarjetaUsuario(usuario, destacada) {
+        const tarjeta = document.createElement("article");
+        tarjeta.className = "tarjeta" + (destacada ? " destacada" : "");
+
+        const cuerpo = document.createElement("div");
+        cuerpo.className = "tarjeta-cuerpo";
+
+        const perfil = document.createElement("div");
+        perfil.className = "perfil";
+
+        if (rutaSegura(usuario.avatar)) {
+          perfil.appendChild(
+            crearImagen(
+              usuario.avatar,
+              "Avatar de " + usuario.username,
+              "avatar",
+            ),
+          );
+        } else {
+          const inicial = (
+            (usuario.firstname || "?")[0] + (usuario.lastname || "")[0]
+          ).toUpperCase();
+          perfil.appendChild(
+            textoElemento("div", inicial, "avatar avatar-inicial"),
+          );
+        }
+
+        const titulo = document.createElement("div");
+        titulo.appendChild(
+          textoElemento("h3", `${usuario.firstname} ${usuario.lastname}`),
+        );
+        titulo.appendChild(
+          textoElemento("div", "@" + usuario.username, "usuario-nombre"),
+        );
+        perfil.appendChild(titulo);
+        cuerpo.appendChild(perfil);
+
+        const datos = document.createElement("ul");
+        datos.className = "datos";
+        datos.appendChild(crearFila("ID", "#" + usuario.id));
+        datos.appendChild(crearFila("Usuario", usuario.username));
+        cuerpo.appendChild(datos);
+
+        tarjeta.appendChild(cuerpo);
+
+        const pie = document.createElement("div");
+        pie.className = "tarjeta-pie";
+        pie.appendChild(
+          crearBoton("Editar", "secundario", () => editarUsuario(usuario.id)),
+        );
+        pie.appendChild(
+          crearBoton("Eliminar", "eliminar", () => eliminarUsuario(usuario.id)),
+        );
+        tarjeta.appendChild(pie);
+
+        return tarjeta;
+      }
+
+      // Descarga los usuarios guardados y actualiza el contador.
+      // Si se pasa un id, solo se muestra ese usuario (el recién guardado);
+      // si no, se despliega la lista completa.
+      async function cargarUsuarios(idReciente) {
+        const lista = obtener("listaUsuarios");
+        const soloReciente = typeof idReciente === "number";
 
         try {
-            usuariosActuales = await solicitar(API_USERS);
+          usuariosActuales = await solicitar(API_USERS);
 
-            obtener('totalUsuarios').textContent =
-                usuariosActuales.length;
+          contar("totalUsuarios", usuariosActuales.length);
 
-            if (usuariosActuales.length === 0) {
-                lista.appendChild(
-                    textoElemento('p', 'No hay usuarios registrados.')
-                );
-                return;
+          lista.replaceChildren();
+
+          if (soloReciente) {
+            const usuario = usuariosActuales.find((u) => u.id === idReciente);
+
+            if (usuario) {
+              lista.appendChild(tarjetaUsuario(usuario, true));
+              pintarEstado(
+                "estadoUsuarios",
+                "reciente",
+                1,
+                "el usuario",
+                "usuarios",
+                () => cargarUsuarios(),
+              );
+              return;
             }
+          }
 
-            usuariosActuales.forEach(usuario => {
-                const tarjeta = document.createElement('article');
-                tarjeta.className = 'tarjeta';
+          pintarEstado(
+            "estadoUsuarios",
+            "todos",
+            usuariosActuales.length,
+            "usuario",
+            "usuarios",
+          );
 
-                if (usuario.avatar) {
-                    tarjeta.appendChild(
-                        crearImagen(
-                            usuario.avatar,
-                            'Avatar de ' + usuario.username
-                        )
-                    );
-                }
+          if (usuariosActuales.length === 0) {
+            lista.appendChild(
+              estadoVacio(
+                "usuarios",
+                "No hay usuarios registrados.",
+                "Pulsa «Agregar Usuario» para crear el primero.",
+              ),
+            );
+            return;
+          }
 
-                tarjeta.appendChild(
-                    textoElemento(
-                        'h3',
-                        `${usuario.firstname} ${usuario.lastname}`
-                    )
-                );
-
-                tarjeta.appendChild(
-                    textoElemento('p', 'ID: ' + usuario.id)
-                );
-
-                tarjeta.appendChild(
-                    textoElemento('p', 'Usuario: ' + usuario.username)
-                );
-
-                const acciones = document.createElement('div');
-                acciones.className = 'botones-tarjeta';
-
-                acciones.appendChild(
-                    crearBoton('Editar', 'secundario', () => {
-                        editarUsuario(usuario.id);
-                    })
-                );
-
-                acciones.appendChild(
-                    crearBoton('Eliminar', 'eliminar', () => {
-                        eliminarUsuario(usuario.id);
-                    })
-                );
-
-                tarjeta.appendChild(acciones);
-                lista.appendChild(tarjeta);
-            });
-
+          usuariosActuales.forEach((usuario) => {
+            lista.appendChild(tarjetaUsuario(usuario, false));
+          });
         } catch (error) {
-            mensaje('mensajeUsuario', error.message, true);
+          mensaje("mensajeUsuario", error.message, true);
         }
-    }
+      }
 
-    function editarUsuario(id) {
-        const usuario = usuariosActuales.find(u => u.id === id);
+      function editarUsuario(id) {
+        const usuario = usuariosActuales.find((u) => u.id === id);
 
         if (!usuario) {
-            mensaje('mensajeUsuario', 'Usuario no encontrado', true);
-            return;
+          mensaje("mensajeUsuario", "Usuario no encontrado", true);
+          return;
         }
 
-        obtener('formUsuario').reset();
+        obtener("formUsuario").reset();
+        obtener("previewAvatar").replaceChildren();
 
-        obtener('idUsuario').value = usuario.id;
-        obtener('firstname').value = usuario.firstname;
-        obtener('lastname').value = usuario.lastname;
-        obtener('username').value = usuario.username;
+        obtener("idUsuario").value = usuario.id;
+        obtener("firstname").value = usuario.firstname;
+        obtener("lastname").value = usuario.lastname;
+        obtener("username").value = usuario.username;
 
-        obtener('password').value = '';
-        obtener('password').required = false;
+        obtener("password").value = "";
+        obtener("password").required = false;
 
-        obtener('ayudaPassword').textContent =
-            'Deja la contraseña vacía para conservar la actual.';
+        obtener("ayudaPassword").textContent =
+          "Deja la contraseña vacía para conservar la actual.";
 
-        obtener('tituloUsuario').textContent =
-            'Modificar usuario #' + usuario.id;
+        obtener("tituloUsuario").textContent =
+          "Modificar usuario #" + usuario.id;
 
-        obtener('guardarUsuario').textContent =
-            'Actualizar Usuario';
+        obtener("guardarUsuario").textContent = "Actualizar Usuario";
 
-        mensaje('mensajeUsuario', '');
-        obtener('formUsuario').style.display = 'block';
+        mensaje("mensajeUsuario", "");
+        obtener("formUsuario").style.display = "block";
 
-        obtener('formUsuario').scrollIntoView({
-            behavior: 'smooth'
+        obtener("formUsuario").scrollIntoView({
+          behavior: "smooth",
+          block: "center",
         });
-    }
+      }
 
-    obtener('formUsuario').addEventListener(
-        'submit',
-        async evento => {
-            evento.preventDefault();
+      obtener("formUsuario").addEventListener("submit", async (evento) => {
+        evento.preventDefault();
 
-            const formulario = evento.currentTarget;
-            const id = obtener('idUsuario').value;
-            const editando = id !== '';
+        const formulario = evento.currentTarget;
+        const id = obtener("idUsuario").value;
+        const editando = id !== "";
 
-            const datos = new FormData(formulario);
+        const datos = new FormData(formulario);
 
-            // Si se modifica y no hay nueva contraseña,
-            // se conserva la que ya está guardada
-            if (editando && !obtener('password').value) {
-                datos.delete('password');
-            }
-
-            const boton = obtener('guardarUsuario');
-            boton.disabled = true;
-
-            mensaje('mensajeUsuario', 'Guardando usuario...');
-
-            try {
-                const usuario = await solicitar(
-                    editando ? `${API_USERS}/${id}` : API_USERS,
-                    {
-                        method: editando ? 'PUT' : 'POST',
-                        body: datos
-                    }
-                );
-
-                cerrarUsuario();
-
-                mensaje(
-                    'mensajeUsuario',
-                    editando
-                        ? 'Usuario actualizado correctamente. ID: ' + usuario.id
-                        : 'Usuario registrado correctamente. ID: ' + usuario.id
-                );
-
-                await cargarUsuarios();
-
-            } catch (error) {
-                mensaje('mensajeUsuario', error.message, true);
-            } finally {
-                boton.disabled = false;
-            }
+        // Si se modifica y no hay nueva contraseña,
+        // se conserva la que ya está guardada
+        if (editando && !obtener("password").value) {
+          datos.delete("password");
         }
-    );
 
-    async function eliminarUsuario(id) {
-        const confirmado = confirm(
-            `¿Seguro que deseas eliminar al usuario #${id}?`
+        const boton = obtener("guardarUsuario");
+        boton.disabled = true;
+
+        mensaje("mensajeUsuario", "Guardando usuario...");
+        obtener("mensajeUsuario").className = "mensaje info";
+        conIcono(obtener("mensajeUsuario"), ICONOS.info);
+
+        try {
+          const usuario = await solicitar(
+            editando ? `${API_USERS}/${id}` : API_USERS,
+            {
+              method: editando ? "PUT" : "POST",
+              body: datos,
+            },
+          );
+
+          cerrarUsuario();
+
+          mensaje(
+            "mensajeUsuario",
+            editando
+              ? "Usuario actualizado correctamente. ID: " + usuario.id
+              : "Usuario registrado correctamente. ID: " + usuario.id,
+          );
+
+          // Solo el usuario recién guardado
+          await cargarUsuarios(usuario.id);
+        } catch (error) {
+          mensaje("mensajeUsuario", error.message, true);
+        } finally {
+          boton.disabled = false;
+        }
+      });
+
+      async function eliminarUsuario(id) {
+        const confirmado = await confirmarEliminar(
+          `¿Seguro que deseas eliminar al usuario #${id}? Esta acción no se puede deshacer.`,
         );
 
         if (!confirmado) return;
 
+        // Si la lista mostraba todos, se vuelve a mostrar completa
+        const verTodos =
+          obtener("estadoUsuarios").querySelector(".insignia-nueva") === null;
+
         try {
-            await solicitar(`${API_USERS}/${id}`, {
-                method: 'DELETE'
-            });
+          await solicitar(`${API_USERS}/${id}`, {
+            method: "DELETE",
+          });
 
-            cerrarUsuario();
+          cerrarUsuario();
 
-            mensaje(
-                'mensajeUsuario',
-                'Usuario eliminado correctamente'
-            );
+          mensaje("mensajeUsuario", "Usuario eliminado correctamente");
 
+          if (verTodos) {
             await cargarUsuarios();
-
+          } else {
+            ocultarLista("listaUsuarios", "estadoUsuarios");
+            await actualizarTotales();
+          }
         } catch (error) {
-            mensaje('mensajeUsuario', error.message, true);
+          mensaje("mensajeUsuario", error.message, true);
         }
-    }
+      }
 
-    // =============================
-    // MASCOTAS
-    // =============================
+      // =============================
+      // MASCOTAS
+      // =============================
 
-    function cerrarMascota() {
-        obtener('formMascota').style.display = 'none';
-        obtener('formMascota').reset();
-        obtener('idMascota').value = '';
-    }
+      // Rutas de las fotografías que se quitarán al guardar la mascota
+      let fotosAEliminar = new Set();
 
-    function nuevaMascota() {
-        const formulario = obtener('formMascota');
+      const AYUDA_NUEVA = "Máximo 5 imágenes por mascota, 5 MB cada una.";
 
-        formulario.reset();
-        obtener('idMascota').value = '';
+      const ICONO_QUITAR =
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+      const ICONO_DESHACER =
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>';
 
-        obtener('tituloMascota').textContent =
-            'Registrar mascota';
+      function mascotaEnEdicion() {
+        const id = obtener("idMascota").value;
+        if (id === "") return null;
+        return mascotasActuales.find((m) => m.id === Number(id)) || null;
+      }
 
-        obtener('guardarMascota').textContent =
-            'Guardar Mascota';
+      // Cuántas fotografías tendría la mascota si se guardara ahora
+      function fotosQueQuedan(mascota) {
+        return (mascota.img || []).length - fotosAEliminar.size;
+      }
 
-        obtener('ayudaImagenes').textContent =
-            'Máximo 5 imágenes por mascota, 5 MB cada una.';
-
-        mensaje('mensajeMascota', '');
-
-        formulario.style.display = 'block';
-
-        formulario.scrollIntoView({
-            behavior: 'smooth'
-        });
-    }
-
-    async function cargarMascotas() {
-        const lista = obtener('listaMascotas');
-        lista.replaceChildren();
-
-        try {
-            mascotasActuales = await solicitar(API_PETS);
-
-            obtener('totalMascotas').textContent =
-                mascotasActuales.length;
-
-            if (mascotasActuales.length === 0) {
-                lista.appendChild(
-                    textoElemento('p', 'No hay mascotas registradas.')
-                );
-                return;
-            }
-
-            mascotasActuales.forEach(mascota => {
-                const tarjeta = document.createElement('article');
-                tarjeta.className = 'tarjeta';
-
-                tarjeta.appendChild(
-                    textoElemento('h3', mascota.especie)
-                );
-
-                tarjeta.appendChild(
-                    textoElemento('p', 'ID: ' + mascota.id)
-                );
-
-                tarjeta.appendChild(
-                    textoElemento('p', 'Color: ' + mascota.color)
-                );
-
-                tarjeta.appendChild(
-                    textoElemento('p', 'Edad: ' + mascota.edad)
-                );
-
-                tarjeta.appendChild(
-                    textoElemento('p', 'Sexo: ' + mascota.sexo)
-                );
-
-                const galeria = document.createElement('div');
-                galeria.className = 'galeria';
-
-                (mascota.img || []).forEach(ruta => {
-                    galeria.appendChild(
-                        crearImagen(ruta, 'Fotografía de mascota')
-                    );
-                });
-
-                tarjeta.appendChild(galeria);
-
-                const acciones = document.createElement('div');
-                acciones.className = 'botones-tarjeta';
-
-                acciones.appendChild(
-                    crearBoton('Editar', 'secundario', () => {
-                        editarMascota(mascota.id);
-                    })
-                );
-
-                acciones.appendChild(
-                    crearBoton('Eliminar', 'eliminar', () => {
-                        eliminarMascota(mascota.id);
-                    })
-                );
-
-                tarjeta.appendChild(acciones);
-                lista.appendChild(tarjeta);
-            });
-
-        } catch (error) {
-            mensaje('mensajeMascota', error.message, true);
-        }
-    }
-
-    function editarMascota(id) {
-        const mascota = mascotasActuales.find(m => m.id === id);
+      function actualizarAyudaImagenes() {
+        const mascota = mascotaEnEdicion();
 
         if (!mascota) {
-            mensaje('mensajeMascota', 'Mascota no encontrada', true);
-            return;
+          obtener("ayudaImagenes").textContent = AYUDA_NUEVA;
+          return;
         }
 
-        obtener('formMascota').reset();
+        const total = (mascota.img || []).length;
+        const quitar = fotosAEliminar.size;
+        const libres = Math.max(0, 5 - fotosQueQuedan(mascota));
 
-        obtener('idMascota').value = mascota.id;
-        obtener('especie').value = mascota.especie;
-        obtener('color').value = mascota.color;
-        obtener('edad').value = mascota.edad;
-        obtener('sexo').value = mascota.sexo;
+        let texto = `Esta mascota tiene ${total} ${total === 1 ? "imagen" : "imágenes"}. `;
 
-        const cantidad = (mascota.img || []).length;
+        if (quitar > 0) {
+          texto += `Se eliminar${quitar === 1 ? "á 1" : "án " + quitar} al guardar. `;
+        } else if (total > 0) {
+          texto += "Pulsa la ✕ de una foto para quitarla. ";
+        }
 
-        obtener('ayudaImagenes').textContent =
-            `Esta mascota ya tiene ${cantidad} imágenes. ` +
-            `Puedes agregar hasta ${Math.max(0, 5 - cantidad)} más. ` +
-            'Las fotografías actuales se conservarán.';
+        texto += `Puedes agregar hasta ${libres} más.`;
 
-        obtener('tituloMascota').textContent =
-            'Modificar mascota #' + mascota.id;
+        obtener("ayudaImagenes").textContent = texto;
+      }
 
-        obtener('guardarMascota').textContent =
-            'Actualizar Mascota';
+      function limpiarFotosActuales() {
+        fotosAEliminar = new Set();
+        obtener("galeriaActuales").replaceChildren();
+        obtener("imagenesActuales").hidden = true;
+      }
 
-        mensaje('mensajeMascota', '');
+      // Muestra las fotos actuales de la mascota; cada una se puede marcar para quitar
+      function pintarFotosActuales(mascota) {
+        limpiarFotosActuales();
 
-        obtener('formMascota').style.display = 'block';
+        const fotos = (mascota.img || []).filter(rutaSegura);
+        obtener("imagenesActuales").hidden = fotos.length === 0;
 
-        obtener('formMascota').scrollIntoView({
-            behavior: 'smooth'
+        fotos.forEach((ruta, indice) => {
+          const numero = indice + 1;
+          const foto = document.createElement("div");
+          foto.className = "foto-actual";
+
+          foto.appendChild(
+            crearImagen(ruta, `Fotografía ${numero} de ${mascota.especie}`, ""),
+          );
+          foto.appendChild(
+            textoElemento("span", "Se eliminará", "aviso-quitar"),
+          );
+
+          const boton = document.createElement("button");
+          boton.type = "button";
+          boton.className = "quitar-foto";
+
+          const pintarBoton = () => {
+            const marcada = fotosAEliminar.has(ruta);
+
+            foto.classList.toggle("marcada", marcada);
+            boton.classList.toggle("deshacer", marcada);
+            boton.replaceChildren();
+            conIcono(boton, marcada ? ICONO_DESHACER : ICONO_QUITAR);
+
+            const accion = marcada ? "Conservar" : "Quitar";
+            boton.title = `${accion} fotografía ${numero}`;
+            boton.setAttribute("aria-label", `${accion} fotografía ${numero}`);
+            boton.setAttribute("aria-pressed", String(marcada));
+          };
+
+          boton.addEventListener("click", () => {
+            if (fotosAEliminar.has(ruta)) {
+              fotosAEliminar.delete(ruta);
+            } else {
+              fotosAEliminar.add(ruta);
+            }
+
+            pintarBoton();
+            actualizarAyudaImagenes();
+          });
+
+          pintarBoton();
+          foto.appendChild(boton);
+          obtener("galeriaActuales").appendChild(foto);
         });
-    }
+      }
 
-    obtener('formMascota').addEventListener(
-        'submit',
-        async evento => {
-            evento.preventDefault();
+      function cerrarMascota() {
+        obtener("formMascota").style.display = "none";
+        obtener("formMascota").reset();
+        obtener("idMascota").value = "";
+        obtener("previewMascota").replaceChildren();
+        limpiarFotosActuales();
+      }
 
-            const formulario = evento.currentTarget;
-            const id = obtener('idMascota').value;
-            const editando = id !== '';
+      function nuevaMascota() {
+        const formulario = obtener("formMascota");
 
-            const archivos = obtener('img').files;
-            let cantidadActual = 0;
+        formulario.reset();
+        obtener("previewMascota").replaceChildren();
+        obtener("idMascota").value = "";
+        limpiarFotosActuales();
 
-            if (editando) {
-                const mascota = mascotasActuales.find(
-                    m => m.id === Number(id)
-                );
+        obtener("tituloMascota").textContent = "Registrar mascota";
 
-                if (!mascota) {
-                    mensaje(
-                        'mensajeMascota',
-                        'La mascota ya no está disponible. Actualiza la lista.',
-                        true
-                    );
-                    return;
-                }
+        obtener("guardarMascota").textContent = "Guardar Mascota";
 
-                cantidadActual = (mascota.img || []).length;
-            }
+        actualizarAyudaImagenes();
 
-            if (cantidadActual + archivos.length > 5) {
-                mensaje(
-                    'mensajeMascota',
-                    `No puedes superar las 5 imágenes. ` +
-                    `Actualmente tienes ${cantidadActual}.`,
-                    true
-                );
-                return;
-            }
+        mensaje("mensajeMascota", "");
 
-            const datos = new FormData(formulario);
-            const boton = obtener('guardarMascota');
+        formulario.style.display = "block";
 
-            boton.disabled = true;
+        formulario.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        obtener("especie").focus({ preventScroll: true });
+      }
 
-            mensaje('mensajeMascota', 'Guardando mascota...');
+      function tarjetaMascota(mascota, destacada) {
+        const tarjeta = document.createElement("article");
+        tarjeta.className = "tarjeta" + (destacada ? " destacada" : "");
 
-            try {
-                const mascota = await solicitar(
-                    editando ? `${API_PETS}/${id}` : API_PETS,
-                    {
-                        method: editando ? 'PUT' : 'POST',
-                        body: datos
-                    }
-                );
+        const imagenes = (mascota.img || []).filter(rutaSegura);
 
-                cerrarMascota();
+        // Portada
+        const portada = document.createElement("div");
+        portada.className = "portada";
 
-                mensaje(
-                    'mensajeMascota',
-                    editando
-                        ? 'Mascota actualizada correctamente. ID: ' + mascota.id
-                        : 'Mascota registrada correctamente. ID: ' + mascota.id
-                );
+        const principal = crearImagen(
+          imagenes[0],
+          "Fotografía de " + mascota.especie,
+          "",
+        );
 
-                await cargarMascotas();
-
-            } catch (error) {
-                mensaje('mensajeMascota', error.message, true);
-            } finally {
-                boton.disabled = false;
-            }
+        if (imagenes.length > 0) {
+          portada.appendChild(principal);
+        } else {
+          const vacia = document.createElement("div");
+          vacia.className = "portada-vacia";
+          vacia.innerHTML = ICONOS.patita;
+          portada.appendChild(vacia);
         }
-    );
 
-    async function eliminarMascota(id) {
-        const confirmado = confirm(
-            `¿Seguro que deseas eliminar a la mascota #${id}?`
+        portada.appendChild(textoElemento("span", "#" + mascota.id, "id-chip"));
+        tarjeta.appendChild(portada);
+
+        const cuerpo = document.createElement("div");
+        cuerpo.className = "tarjeta-cuerpo";
+
+        cuerpo.appendChild(textoElemento("h3", mascota.especie));
+
+        const etiquetas = document.createElement("div");
+        etiquetas.className = "etiquetas";
+        const sexo = String(mascota.sexo || "").toLowerCase();
+        etiquetas.appendChild(
+          textoElemento(
+            "span",
+            mascota.sexo,
+            "etiqueta " + (sexo === "macho" || sexo === "hembra" ? sexo : ""),
+          ),
+        );
+        etiquetas.appendChild(
+          textoElemento(
+            "span",
+            `${mascota.edad} ${Number(mascota.edad) === 1 ? "año" : "años"}`,
+            "etiqueta",
+          ),
+        );
+        cuerpo.appendChild(etiquetas);
+
+        const datos = document.createElement("ul");
+        datos.className = "datos";
+        datos.appendChild(crearFila("Color", mascota.color));
+        datos.appendChild(crearFila("Fotografías", imagenes.length));
+        cuerpo.appendChild(datos);
+
+        // Miniaturas: al pulsar una se cambia la portada
+        if (imagenes.length > 1) {
+          const miniaturas = document.createElement("div");
+          miniaturas.className = "miniaturas";
+
+          imagenes.forEach((ruta, indice) => {
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = "miniatura" + (indice === 0 ? " activa" : "");
+            boton.setAttribute("aria-label", "Ver fotografía " + (indice + 1));
+            boton.appendChild(
+              crearImagen(ruta, "Miniatura " + (indice + 1), ""),
+            );
+
+            boton.addEventListener("click", () => {
+              principal.src = ruta;
+              miniaturas
+                .querySelectorAll(".miniatura")
+                .forEach((m) => m.classList.remove("activa"));
+              boton.classList.add("activa");
+            });
+
+            miniaturas.appendChild(boton);
+          });
+
+          cuerpo.appendChild(miniaturas);
+        }
+
+        tarjeta.appendChild(cuerpo);
+
+        const pie = document.createElement("div");
+        pie.className = "tarjeta-pie";
+        pie.appendChild(
+          crearBoton("Editar", "secundario", () => editarMascota(mascota.id)),
+        );
+        pie.appendChild(
+          crearBoton("Eliminar", "eliminar", () => eliminarMascota(mascota.id)),
+        );
+        tarjeta.appendChild(pie);
+
+        return tarjeta;
+      }
+
+      // Igual que con usuarios: con id solo se muestra la mascota recién
+      // guardada; sin id se despliega la lista completa.
+      async function cargarMascotas(idReciente) {
+        const lista = obtener("listaMascotas");
+        const soloReciente = typeof idReciente === "number";
+
+        try {
+          mascotasActuales = await solicitar(API_PETS);
+
+          contar("totalMascotas", mascotasActuales.length);
+
+          lista.replaceChildren();
+
+          if (soloReciente) {
+            const mascota = mascotasActuales.find((m) => m.id === idReciente);
+
+            if (mascota) {
+              lista.appendChild(tarjetaMascota(mascota, true));
+              pintarEstado(
+                "estadoMascotas",
+                "reciente",
+                1,
+                "la mascota",
+                "mascotas",
+                () => cargarMascotas(),
+              );
+              return;
+            }
+          }
+
+          pintarEstado(
+            "estadoMascotas",
+            "todos",
+            mascotasActuales.length,
+            "mascota",
+            "mascotas",
+          );
+
+          if (mascotasActuales.length === 0) {
+            lista.appendChild(
+              estadoVacio(
+                "mascotas",
+                "No hay mascotas registradas.",
+                "Pulsa «Agregar Mascota» para registrar la primera.",
+              ),
+            );
+            return;
+          }
+
+          mascotasActuales.forEach((mascota) => {
+            lista.appendChild(tarjetaMascota(mascota, false));
+          });
+        } catch (error) {
+          mensaje("mensajeMascota", error.message, true);
+        }
+      }
+
+      function editarMascota(id) {
+        const mascota = mascotasActuales.find((m) => m.id === id);
+
+        if (!mascota) {
+          mensaje("mensajeMascota", "Mascota no encontrada", true);
+          return;
+        }
+
+        obtener("formMascota").reset();
+        obtener("previewMascota").replaceChildren();
+
+        obtener("idMascota").value = mascota.id;
+        obtener("especie").value = mascota.especie;
+        obtener("color").value = mascota.color;
+        obtener("edad").value = mascota.edad;
+        obtener("sexo").value = mascota.sexo;
+
+        pintarFotosActuales(mascota);
+        actualizarAyudaImagenes();
+
+        obtener("tituloMascota").textContent =
+          "Modificar mascota #" + mascota.id;
+
+        obtener("guardarMascota").textContent = "Actualizar Mascota";
+
+        mensaje("mensajeMascota", "");
+
+        obtener("formMascota").style.display = "block";
+
+        obtener("formMascota").scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+
+      obtener("formMascota").addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+
+        const formulario = evento.currentTarget;
+        const id = obtener("idMascota").value;
+        const editando = id !== "";
+
+        const archivos = obtener("img").files;
+        let cantidadActual = 0;
+
+        if (editando) {
+          const mascota = mascotasActuales.find((m) => m.id === Number(id));
+
+          if (!mascota) {
+            mensaje(
+              "mensajeMascota",
+              "La mascota ya no está disponible. Actualiza la lista.",
+              true,
+            );
+            return;
+          }
+
+          // Se descuentan las fotos marcadas para quitar
+          cantidadActual = fotosQueQuedan(mascota);
+        }
+
+        if (cantidadActual + archivos.length > 5) {
+          mensaje(
+            "mensajeMascota",
+            `No puedes superar las 5 imágenes. Después de quitar las ` +
+              `marcadas la mascota conserva ${cantidadActual}.`,
+            true,
+          );
+          return;
+        }
+
+        const datos = new FormData(formulario);
+
+        // El servidor (PUT) elimina las imágenes que lleguen en «eliminar»
+        if (editando) {
+          fotosAEliminar.forEach((ruta) => datos.append("eliminar", ruta));
+        }
+        const boton = obtener("guardarMascota");
+
+        boton.disabled = true;
+
+        mensaje("mensajeMascota", "Guardando mascota...");
+        obtener("mensajeMascota").className = "mensaje info";
+        conIcono(obtener("mensajeMascota"), ICONOS.info);
+
+        try {
+          const mascota = await solicitar(
+            editando ? `${API_PETS}/${id}` : API_PETS,
+            {
+              method: editando ? "PUT" : "POST",
+              body: datos,
+            },
+          );
+
+          cerrarMascota();
+
+          mensaje(
+            "mensajeMascota",
+            editando
+              ? "Mascota actualizada correctamente. ID: " + mascota.id
+              : "Mascota registrada correctamente. ID: " + mascota.id,
+          );
+
+          // Solo la mascota recién guardada
+          await cargarMascotas(mascota.id);
+        } catch (error) {
+          mensaje("mensajeMascota", error.message, true);
+        } finally {
+          boton.disabled = false;
+        }
+      });
+
+      async function eliminarMascota(id) {
+        const confirmado = await confirmarEliminar(
+          `¿Seguro que deseas eliminar a la mascota #${id}? Esta acción no se puede deshacer.`,
         );
 
         if (!confirmado) return;
 
+        const verTodos =
+          obtener("estadoMascotas").querySelector(".insignia-nueva") === null;
+
         try {
-            await solicitar(`${API_PETS}/${id}`, {
-                method: 'DELETE'
-            });
+          await solicitar(`${API_PETS}/${id}`, {
+            method: "DELETE",
+          });
 
-            cerrarMascota();
+          cerrarMascota();
 
-            mensaje(
-                'mensajeMascota',
-                'Mascota eliminada correctamente'
-            );
+          mensaje("mensajeMascota", "Mascota eliminada correctamente");
 
+          if (verTodos) {
             await cargarMascotas();
-
+          } else {
+            ocultarLista("listaMascotas", "estadoMascotas");
+            await actualizarTotales();
+          }
         } catch (error) {
-            mensaje('mensajeMascota', error.message, true);
+          mensaje("mensajeMascota", error.message, true);
         }
-    }
+      }
 
-    // Cargar registros cuando se abre la página
-    async function iniciar() {
-        await Promise.all([
-            cargarUsuarios(),
-            cargarMascotas()
-        ]);
-    }
+      // =============================
+      // INICIO
+      // =============================
 
-    iniciar();
-</script>
+      // Solo actualiza los contadores, sin desplegar ninguna lista
+      async function actualizarTotales() {
+        try {
+          const [usuarios, mascotas] = await Promise.all([
+            solicitar(API_USERS),
+            solicitar(API_PETS),
+          ]);
 
-</body>
+          usuariosActuales = usuarios;
+          mascotasActuales = mascotas;
+
+          contar("totalUsuarios", usuarios.length);
+          contar("totalMascotas", mascotas.length);
+        } catch (error) {
+          mensaje("mensajeUsuario", error.message, true);
+        }
+      }
+
+      // Al abrir la página las listas no se despliegan:
+      // se ven con «Ver Usuarios» / «Ver Mascotas»
+      actualizarTotales();
+    </script>
+
+    <script>
+      // =============================
+      // TEMA CLARO / OSCURO
+      // =============================
+      (function () {
+        const raiz = document.documentElement;
+        const boton = document.getElementById("botonTema");
+        const texto = document.getElementById("textoTema");
+
+        function etiqueta() {
+          const oscuro = raiz.dataset.theme === "dark";
+          texto.textContent = oscuro ? "Modo claro" : "Modo oscuro";
+          boton.setAttribute("aria-pressed", String(oscuro));
+        }
+
+        boton.addEventListener("click", () => {
+          const nuevo = raiz.dataset.theme === "dark" ? "light" : "dark";
+
+          raiz.classList.add("cambiando");
+          raiz.dataset.theme = nuevo;
+          etiqueta();
+
+          try {
+            localStorage.setItem("tema", nuevo);
+          } catch (e) {}
+
+          setTimeout(() => raiz.classList.remove("cambiando"), 800);
+        });
+
+        etiqueta();
+      })();
+
+      // =============================
+      // BRILLO QUE SIGUE AL MOUSE EN LAS TARJETAS
+      // =============================
+      document.addEventListener(
+        "pointermove",
+        (evento) => {
+          const tarjeta =
+            evento.target.closest &&
+            evento.target.closest(".tarjeta, .estadistica");
+          if (!tarjeta) return;
+
+          const caja = tarjeta.getBoundingClientRect();
+          tarjeta.style.setProperty("--mx", evento.clientX - caja.left + "px");
+          tarjeta.style.setProperty("--my", evento.clientY - caja.top + "px");
+        },
+        { passive: true },
+      );
+
+      // Contadores con animación
+      function contar(id, destino) {
+        const elemento = obtener(id);
+        const inicio = Number(elemento.textContent) || 0;
+        const reducir = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+
+        if (reducir || inicio === destino) {
+          elemento.textContent = destino;
+          return;
+        }
+
+        const t0 = performance.now();
+
+        function paso(ahora) {
+          const avance = Math.min(1, (ahora - t0) / 700);
+          const suave = 1 - Math.pow(1 - avance, 3);
+          elemento.textContent = Math.round(
+            inicio + (destino - inicio) * suave,
+          );
+          if (avance < 1) requestAnimationFrame(paso);
+        }
+
+        requestAnimationFrame(paso);
+      }
+    </script>
+
+    <script>
+      // Video de fondo: respeta "reducir movimiento"
+      (function () {
+        const video = document.getElementById("videoFondo");
+        if (
+          video &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+          video.removeAttribute("autoplay");
+          video.pause();
+        }
+      })();
+    </script>
+  </body>
 </html>
